@@ -1,4 +1,4 @@
-" sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move
+" sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing
 " By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim
 
 " Options:
@@ -43,6 +43,12 @@
 " - Although we have mapped |CTRL-E| and |CTRL-Y| we have not yet handled the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  An undesired animation will eventually fire when the cursor moves.
 "
 " - Resizing the window may cause the cursor to move but CursorMoved will not be fired until later.
+"
+" TODO: This is very nice as a general purpose page scroller, but does not handle cursor scrolling very well.  It works on my setup, which uses cursorline, but users without cursorline may not see the cursor animating.  If we *really* want to achieve this, we could fire keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)
+"
+" TODO: We should store/reset lazyredraw if we are going to continue to clobber it.
+
+finish
 
 if !has("float")
   echo "smooth_scroller requires the +float feature, which is missing"
@@ -96,7 +102,8 @@ endif
 if maparg("<C-Y>", 'n') == ""
   nnoremap <silent> <C-Y> <C-Y>:call <SID>CheckForChange(1)<CR>
 endif
-" TODO: We could let the user provide a list of other key mappings for which we want CheckForChange to run afterwards.
+" CONSIDER: We could let the user provide a list of other key mappings for which we want CheckForChange to run afterwards.  Alternatively, if he has custom mappings, he could just add a non-movement movement to them, to generate a CursorMoved event.
+" TODO: Make a list of exclude keys, and map them so that they set w:SS_Ignore_Next_Movement .  For example this would apply to / and ? with 'hlsearch' enabled, and maybe also to d.
 
 function! s:CheckForChange(actIfChange)
   let w:newPosition = winsaveview()
@@ -193,8 +200,8 @@ function! s:smooth_scroll(start, end)
         echo "Pending keys detected at ".reltimestr(reltime())
       endif
       let w:oldPosition = current
-      " Causes flicker, a little less with lazyredraw enabled
-      " But we must set to a:end, to be in the right place to process the next char, whether it is further movement or an edit.
+      " We must set to a:end, to be in the right place to process the next char, whether it is further movement or an edit.
+      " Causes flicker without lazyredraw enabled
       set lazyredraw
       call winrestview(a:end)
       return 1
