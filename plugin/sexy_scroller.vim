@@ -17,7 +17,7 @@
 "
 "   let g:SexyScroller_MaxTime = 500
 "
-" Power users may want this a little lower.  Set it higher for eye candy.
+" Power users may want this a little lower.
 "
 " Set the easing style:
 "
@@ -26,13 +26,23 @@
 " where 1 = start fast, end slow
 "       2 = start slow, get faster, end slow
 "       3 = constant
+"
+" For eye candy, set MaxTime to 1200 and EasingStyle to 2
+" Power users may prefer MaxTime a little lower, and EasingStyle 1 or 3
 
 " ISSUES:
-" - It looks odd after you perform a search with 'incsearch' because Vim has already taken us to the target line.  We jump back to where we started, and then scroll forwards to the target!  There is no event hook to handle this.
+"
+" - It looks odd after you perform a `/` search with 'incsearch' because Vim has already taken us to the target line.  At the end we jump back to where we started, and then scroll forwards to the target!  There is no event hook to handle this.
+"
 " - I have disabled smooth horizontal animation of the cursor because I cannot see the cursor moving, even with 'cursorcolumn' enabled, so it's pointless!  In fact the cursor is also invisible durinv vertical scrolling, but 'cursorline' can show the cursor line moving.
-" - If more movement actions are keyed whilst we are still scrolling (e.g. hit PageDown 10 times), these will each be animated separately.  Even without easing, a pause is visible between animations.  Ideally after a keystroke, we would re-target the final destination.
+"
+" - If more movement actions are keyed whilst we are still scrolling (e.g. hit PageDown 10 times), these will each be animated separately.  Even without easing, a small pause is noticeable between animations.  Ideally after a keystroke, we would re-target the final destination.  getchar() may be of use here.
+"
 " - The cursor animates after a mouse click, which does not seem quite right.
+"
 " - Although we have mapped |CTRL-E| and |CTRL-Y| we have not yet handled the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  An undesired animation will eventually fire when the cursor moves.
+"
+" - Resizing the window may cause the cursor to move but CursorMoved will not be fired until later.
 
 if !has("float")
   echo "smooth_scroller requires the +float feature, which is missing"
@@ -61,6 +71,10 @@ if !exists("g:SexyScroller_EasingStyle")
   let g:SexyScroller_EasingStyle = 1
 endif
 
+if !exists("g:SexyScroller_DetectPendingKeys")
+  let g:SexyScroller_DetectPendingKeys = 0
+endif
+
 if !exists("g:SexyScroller_Debug")
   let g:SexyScroller_Debug = 0
 endif
@@ -71,6 +85,8 @@ augroup Smooth_Scroller
   autocmd!
   autocmd CursorMoved * call s:CheckForChange(1)
   autocmd InsertLeave * call s:CheckForChange(0)
+  " Unfortunately we would like to fire on other occasions too, e.g.
+  " BufferScrolled, but Vim does not fire enough events for us to hook to!
 augroup END
 
 " |CTRL-E| and |CTRL-Y| do not fire any events for us to detect, but they do scroll the window.
@@ -80,6 +96,7 @@ endif
 if maparg("<C-Y>", 'n') == ""
   nnoremap <silent> <C-Y> <C-Y>:call <SID>CheckForChange(1)<CR>
 endif
+" TODO: We could let the user provide a list of other key mappings for which we want CheckForChange to run afterwards.
 
 function! s:CheckForChange(actIfChange)
   let w:newPosition = winsaveview()
@@ -88,7 +105,9 @@ function! s:CheckForChange(actIfChange)
         \ && exists("w:oldPosition")
         \ && exists("w:oldBuffer") && w:newBuffer==w:oldBuffer "&& mode()=='n'
     if s:differ("topline",3) || s:differ("leftcol",3) || s:differ("lnum",2) || s:differ("col",2)
-      call s:smooth_scroll(w:oldPosition, w:newPosition)
+      if s:smooth_scroll(w:oldPosition, w:newPosition)
+        return
+      endif
     endif
   endif
   let w:oldPosition = w:newPosition
@@ -100,6 +119,7 @@ function! s:differ(str,amount)
 endfunction
 
 function! s:smooth_scroll(start, end)
+
   let pi = acos(-1)
 
   "if g:SexyScroller_Debug
@@ -117,7 +137,7 @@ function! s:smooth_scroll(start, end)
   "let totalTime = timeForCursorMove + timeForScroll
 
   if g:SexyScroller_Debug
-    echo "totalTime=".totalTime." cursor=".timeForCursorMove." (".numLinesToTravel.",".numColumnsToTravel.") scroll=".timeForScroll." (".numLinesToScroll.",".numColumnsToScroll.")"
+    "echo "totalTime=".totalTime." cursor=".timeForCursorMove." (".numLinesToTravel.",".numColumnsToTravel.") scroll=".timeForScroll." (".numLinesToScroll.",".numColumnsToScroll.")"
   endif
 
   let totalTime = 1.0 * min([g:SexyScroller_MaxTime,max([0,totalTime])])
@@ -128,11 +148,16 @@ function! s:smooth_scroll(start, end)
 
   let startTime = reltime()
   let current = copy(a:end)
+
   while 1
+
     let elapsed = s:get_ms_since(startTime)
     let thruTime = elapsed * 1.0 / totalTime
     if elapsed >= totalTime
       let thruTime = 1.0
+    endif
+    if elapsed >= totalTime
+      break
     endif
 
     " Easing
@@ -150,14 +175,37 @@ function! s:smooth_scroll(start, end)
     let current["lnum"] = float2nr( notThru*a:start["lnum"] + thru*a:end["lnum"] + 0.5 )
     let current["col"] = float2nr( notThru*a:start["col"] + thru*a:end["col"] + 0.5 )
     "echo "thruTime=".printf('%g',thruTime)." thru=".printf('%g',thru)." notThru=".printf('%g',notThru)." topline=".current["topline"]." leftcol=".current["leftcol"]." lnum=".current["lnum"]." col=".current["col"]
+
     call winrestview(current)
     redraw
-    if elapsed >= totalTime
-      break
-    endif
+
     exec "sleep 15m"
+
+    " Stop the current animation if the user presses a new key.
+    " We jump to the end position, but by returning 1 we will not clobber oldPosition.  This means if the pending keys also cause animation, it will continue scrolling from our current position.  Unfortunately it also means if the pending keys do *not* cause animation, we will leave a dirty oldPosition that will cause an unwanted animation later.
+    " To avoid that, we could set a time after which oldPosition should be stored without causing an animation.
+    " Anyway even when it does "work", the transition from one animation to the next is not very smooth, because the easing function will no doubt start with a different speed from the current speed.  We would need to retain currentSpeed and make a new easing function based on it.
+    " For some reason, PageDown does not always trigger a value in getchar(), although { and } do.
+    " If we hold a scrolling key down, with easing style 2, we appear to go nowhere until we release.
+    " Basically this was an afterthought, and the animation algorithm will need to change if we want to solve it properly.
+    if g:SexyScroller_DetectPendingKeys && getchar(1)
+      if g:SexyScroller_Debug
+        echo "Pending keys detected at ".reltimestr(reltime())
+      endif
+      let w:oldPosition = current
+      " Causes flicker, a little less with lazyredraw enabled
+      " But we must set to a:end, to be in the right place to process the next char, whether it is further movement or an edit.
+      set lazyredraw
+      call winrestview(a:end)
+      return 1
+    endif
+
   endwhile
+
   call winrestview(a:end)
+
+  return 0
+
 endfunction
 
 function! s:get_ms_since(time)
