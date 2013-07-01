@@ -15,10 +15,11 @@ augroup END
 
 function! s:CheckForJump()
   let w:newState = winsaveview()
-  " if w:newState["topline"] != w:oldState["topline"] || w:newState["leftcol"] != w:oldState["leftcol"] || w:newState["lnum"] != w:oldState["lnum"] || w:newState["col"] != w:oldState["col"]
-  if s:differ("topline") || s:differ("leftcol") || s:differ("lnum") || s:differ("col")
-    "call winrestview(w:oldState)
-    call s:smooth_scroll(w:oldState, w:newState)
+  if exists("w:oldState")
+    " TODO: Do not act if we have just changed buffer, or window size, etc. etc.
+    if s:differ("topline") || s:differ("leftcol") || s:differ("lnum") || s:differ("col")
+      call s:smooth_scroll(w:oldState, w:newState)
+    endif
   endif
   let w:oldState = w:newState
 endfunction
@@ -29,10 +30,24 @@ endfunction
 
 function! s:smooth_scroll(start, end)
   let pi = acos(-1)
-  "echo "Going from ".start["topline"]." to ".end["topline"]
+  "echo "Going from ".a:start["topline"]." to ".a:end["topline"]." with lnum from ".a:start["lnum"]." to ".a:end["lnum"]
+  echo "Target offset: ".(a:end["lnum"] - a:end["topline"])
   "redraw
   let startTime = reltime()
-  let totalTime = 300.0   " MUST BE A FLOAT!
+  "let totalTime = 300.0   " MUST BE A FLOAT!
+  let minTimePerLine = 20.0
+  let numLinesToTravel = abs( a:end["lnum"] - a:start["lnum"] )
+  let numLinesToScroll = abs( a:end["topline"] - a:start["topline"] )
+  let useLinesToTravel = max([numLinesToTravel,numLinesToScroll]) * 1.0
+  let timeWeShouldTake = minTimePerLine * useLinesToTravel
+  "echo printf('%g',numLinesToTravel)." lines will take ".printf('%g',timeWeShouldTake)."ms"
+  let totalTime = timeWeShouldTake
+  if totalTime > 500.0
+    let totalTime = 500.0
+  endif
+  if totalTime < 1.0
+    let totalTime = 1.0
+  endif
   let current = copy(a:start)
   while 1
     let elapsed = s:get_ms_since(startTime)
