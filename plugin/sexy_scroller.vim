@@ -32,7 +32,7 @@
 " - I have disabled smooth horizontal animation of the cursor because I cannot see the cursor moving, even with 'cursorcolumn' enabled, so it's pointless!  In fact the cursor is also invisible durinv vertical scrolling, but 'cursorline' can show the cursor line moving.
 " - If more movement actions are keyed whilst we are still scrolling (e.g. hit PageDown 10 times), these will each be animated separately.  Even without easing, a pause is visible between animations.  Ideally after a keystroke, we would re-target the final destination.
 " - The cursor animates after a mouse click, which does not seem quite right.
-" - Because it fires on CursorMoved, it cannot detect scrolls where the cursor does not move, e.g. |CTRL-E| and |CTRL-Y|.  And in these cases, an undesired animation will eventually fire when it does move.  We might consider mapping these.
+" - Although we have mapped |CTRL-E| and |CTRL-Y| we have not yet handled the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  An undesired animation will eventually fire when the cursor moves.
 
 if !has("float")
   echo "smooth_scroller requires the +float feature, which is missing"
@@ -72,6 +72,14 @@ augroup Smooth_Scroller
   autocmd CursorMoved * call s:CheckForChange(1)
   autocmd InsertLeave * call s:CheckForChange(0)
 augroup END
+
+" |CTRL-E| and |CTRL-Y| do not fire any events for us to detect, but they do scroll the window.
+if maparg("<C-E>", 'n') == ""
+  nnoremap <silent> <C-E> <C-E>:call <SID>CheckForChange(1)<CR>
+endif
+if maparg("<C-Y>", 'n') == ""
+  nnoremap <silent> <C-Y> <C-Y>:call <SID>CheckForChange(1)<CR>
+endif
 
 function! s:CheckForChange(actIfChange)
   let w:newPosition = winsaveview()
