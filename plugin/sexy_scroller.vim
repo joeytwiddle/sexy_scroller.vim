@@ -124,6 +124,7 @@ function! s:CheckForChange(actIfChange)
         \ && exists("w:oldPosition")
         \ && exists("w:oldBuffer") && w:newBuffer==w:oldBuffer "&& mode()=='n'
     if s:differ("topline",3) || s:differ("leftcol",3) || s:differ("lnum",2) || s:differ("col",2)
+        \ || exists("w:interruptedAnimationAt")
       if s:smooth_scroll(w:oldPosition, w:newPosition)
         return
       endif
@@ -168,6 +169,29 @@ function! s:smooth_scroll(start, end)
   let startTime = reltime()
   let current = copy(a:end)
 
+  " Because arguments are immutable
+  let start = a:start
+
+  " If we have *just* interrupted a previous animation, then we continue from where he left off.
+  if exists("w:interruptedAnimationAt")
+    let timeSinceInterruption = s:get_ms_since(w:interruptedAnimationAt)
+    if g:SexyScroller_Debug
+      echo "Checking interrupted animation, timeSince=".float2nr(timeSinceInterruption)." remaining=".float2nr(w:interruptedAnimationTimeRemaining)
+    endif
+    if timeSinceInterruption < 20
+      let start = w:interruptedAnimationFrom
+      if g:SexyScroller_Debug
+        echo "Continuing interrupted animation with ".float2nr(w:interruptedAnimationTimeRemaining)." remaining, from ".start["topline"]
+      endif
+      " Secondary keystrokes should not make the animation finish sooner than it would have!
+      " But I don't think we should add the times together.
+      if totalTime < w:interruptedAnimationTimeRemaining
+        let totalTime = w:interruptedAnimationTimeRemaining
+      endif
+    endif
+    unlet w:interruptedAnimationAt
+  endif
+
   while 1
 
     let elapsed = s:get_ms_since(startTime) + 15
@@ -190,10 +214,10 @@ function! s:smooth_scroll(start, end)
     endif
 
     let notThru = 1.0 - thru
-    let current["topline"] = float2nr( notThru*a:start["topline"] + thru*a:end["topline"] + 0.5 )
-    let current["leftcol"] = float2nr( notThru*a:start["leftcol"] + thru*a:end["leftcol"] + 0.5 )
-    let current["lnum"] = float2nr( notThru*a:start["lnum"] + thru*a:end["lnum"] + 0.5 )
-    let current["col"] = float2nr( notThru*a:start["col"] + thru*a:end["col"] + 0.5 )
+    let current["topline"] = float2nr( notThru*start["topline"] + thru*a:end["topline"] + 0.5 )
+    let current["leftcol"] = float2nr( notThru*start["leftcol"] + thru*a:end["leftcol"] + 0.5 )
+    let current["lnum"] = float2nr( notThru*start["lnum"] + thru*a:end["lnum"] + 0.5 )
+    let current["col"] = float2nr( notThru*start["col"] + thru*a:end["col"] + 0.5 )
     "echo "thruTime=".printf('%g',thruTime)." thru=".printf('%g',thru)." notThru=".printf('%g',notThru)." topline=".current["topline"]." leftcol=".current["leftcol"]." lnum=".current["lnum"]." col=".current["col"]
 
     call winrestview(current)
@@ -209,15 +233,22 @@ function! s:smooth_scroll(start, end)
     " If we hold a scrolling key down, with easing style 2, we appear to go nowhere until we release.
     " Basically this was an afterthought, and the animation algorithm will need to change if we want to solve it properly.
     if g:SexyScroller_DetectPendingKeys && getchar(1)
+      let w:oldPosition = a:end
+      let w:interruptedAnimationAt = reltime()
+      let w:interruptedAnimationFrom = current
+      "let w:interruptedAnimationTimeRemaining = totalTime * notThru   " No because notThru is an eased value
+      let w:interruptedAnimationTimeRemaining = totalTime * (1.0 - thruTime)
+      "let w:interruptedAnimationTimeRemaining = totalTime - elapsed
       if g:SexyScroller_Debug
-        echo "Pending keys detected at ".reltimestr(reltime())
+        echo "Pending keys detected at ".reltimestr(reltime())." remaining=".float2nr(w:interruptedAnimationTimeRemaining)
       endif
-      let w:oldPosition = current
+      "let w:oldPosition = current
       " We must set to a:end, to be in the right place to process the next char, whether it is further movement or an edit.
       " Causes flicker without lazyredraw enabled
       set lazyredraw
       call winrestview(a:end)
-      return 1
+      "return 1
+      return 0
     endif
 
   endwhile
