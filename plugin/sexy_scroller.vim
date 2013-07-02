@@ -46,19 +46,25 @@
 
 " ISSUES:
 "
-" - It looks odd after you perform a `/` search with 'incsearch' because Vim has already taken us to the target line.  At the end we jump back to where we started, and then scroll forwards to the target!  There is no event hook to handle this.
+" - It looks odd after you perform a `/` search with 'incsearch' because Vim has already taken us to the target line.  When ending the search, we jump back to where we started from, and then scroll forwards to the target!  There is no event hook to handle this.  `n` and `N` work fine.  TODO: We could temporarily disable ourself when `/` or `?` are initiated (until the next CursorMove or CursorHold).
 "
-" - I have disabled smooth horizontal animation of the cursor because I cannot see the cursor moving, even with 'cursorcolumn' enabled, so it's pointless!  In fact the cursor is also invisible durinv vertical scrolling, but 'cursorline' can show the cursor line moving.
+" - I have disabled smooth horizontal animation of the cursor because I cannot see the cursor moving, even with 'cursorcolumn' enabled, so it's pointless!  In fact the cursor is also invisible during vertical scrolling, but 'cursorline' can show the cursor line moving.  A workaround for this might be to split the requested movement into a sequence of smaller movements, rather than using winrestview.  (We would want to avoid re-triggering ourself on those CursorMove events!  Either with :noauto or with a flag.)
 "
-" - If more movement actions are keyed whilst we are still scrolling (e.g. hit PageDown 10 times), these will each be animated separately.  Even without easing, a small pause is noticeable between animations.  Ideally after a keystroke, we would re-target the final destination.  getchar() may be of use here.
+" FIXED: If more movement actions are keyed whilst we are still scrolling (e.g. hit PageDown 10 times), these will each be animated separately.  Even without easing, a small pause is noticeable between animations.  Ideally after a keystroke, we would re-target the final destination.  getchar() may be of use here.
 "
-" - The cursor animates after a mouse click, which does not seem quite right.
+" MITIGATED with mapping below (provided the user does not have a mapping already): Although we have mapped |CTRL-E| and |CTRL-Y| we have not yet handled the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  An undesired animation will eventually fire when the cursor moves.
 "
-" - Although we have mapped |CTRL-E| and |CTRL-Y| we have not yet handled the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  An undesired animation will eventually fire when the cursor moves.
+" - If the user has set their own mappings for scrolling (which do not move the cursor), then like C-E and C-Y, these will not fire a CursorMoved event, and not initiate animation.  One workaround for this is for the user to add a couple of keystrokes to the end of their mapping, that *will* initiate a CursorMoved and a check for animation.  For example, add <BS><Space> at the end of the mappings (which will work everywhere except the first char in the document).
 "
-" - Resizing the window may cause the cursor to move but CursorMoved will not be fired until later.
+" - Plugins and such which use :noauto (TagList for example) will not fire CursorMoved when it actually happens, leading to an animation occurring later, from a long-gone source to a long-sat-on destination.
 "
-" TODO: This is very nice as a general purpose page scroller, but does not handle cursor scrolling very well.  Well it's ok if cursorline is enabled, but users without cursorline may not see the cursor animating.  If we *really* want to achieve this, we could fire keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)
+" - Resizing the window may cause the cursor to move but CursorMoved will not be fired until later??
+"
+" - The cursor animates after a mouse click, which does not seem quite right.  But also doesn't bother me enough to fix it.
+"
+" - Animation does not work at all well with mouse scrolling.  I can't think of any way to work around this.  If you scroll with the mouse more than the keys, this plugin might not be for you.
+"
+" - As mentioned in the second issue above, this is very nice as a general purpose page scroller, but does not handle cursor scrolling very well.  Well it's ok if cursorline is enabled, but users without cursorline probably will not see the cursor animating (at least I don't see it on my system).  If we *really* want to achieve this, we could fire keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)  Alternatively, we can just say that we don't care much about cursor scrolling; this plugin is mainly for animating page scrolling, and cursor movement was an afterthought (or rather a neccessity!).
 "
 " TODO: We should store/reset lazyredraw if we are going to continue to clobber it.
 
@@ -115,6 +121,7 @@ if maparg("<C-Y>", 'n') == ''
   nnoremap <silent> <C-Y> <C-Y>:call <SID>CheckForChange(1)<CR>
 endif
 " CONSIDER: We could let the user provide a list of other key mappings for which we want CheckForChange to run afterwards.  Alternatively, if he has custom mappings, he could just add a non-movement movement to them, to generate a CursorMoved event.
+" BUG: I have done this for my C-J and C-K keys.  But the new implementation of g:SexyScroller_DetectPendingKeys seems to fail on G20<C-J> only.  Can't imagine why.
 " TODO: Make a list of exclude keys, and map them so that they set w:SS_Ignore_Next_Movement .  For example this would apply to / and ? with 'hlsearch' enabled, and maybe also to d.
 
 function! s:CheckForChange(actIfChange)
@@ -195,7 +202,7 @@ function! s:smooth_scroll(start, end)
   while 1
 
     let elapsed = s:get_ms_since(startTime) + 15
-    " GVim is a bit laggy, so +15 renders the position we would be in at the end of the sleep below.
+    " GVim is a bit laggy, so +15 renders the position we should be in at the end of the sleep below.
     let thruTime = elapsed * 1.0 / totalTime
     if elapsed >= totalTime
       let thruTime = 1.0
