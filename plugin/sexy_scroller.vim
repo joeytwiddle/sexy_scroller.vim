@@ -3,32 +3,46 @@
 
 " Options:
 "
-" Set the number of milliseconds to move the cursor one line:
+" Instead of specifying the scrolling *speed*, SexyScroller asks you to
+" specify how *slow* you want scrolling to be.  You can store these options in
+" your .vimrc once you are happy with them.
 "
-"   let g:SexyScroller_CursorTime = 5
+"   :let g:SexyScroller_CursorTime = 5
 "
-" or set it to 0 to never scroll the cursor.
+"       Sets the time taken to move the cursor one line (in milliseconds), or
+"       set it to 0 to never scroll the cursor.  However, you may not see the
+"       cursor during animation, in which case you can   :set cursorline
 "
-" Set the number of milliseconds to scroll the buffer one line:
+"   :let g:SexyScroller_ScrollTime = 10
 "
-"   let g:SexyScroller_ScrollTime = 10
+"       Sets the time taken to scroll the buffer one line.  (I like to pretend
+"       the buffer is "heavier" than the cursor.)
 "
-" Set the maximum time for long scrolls.
+"   :let g:SexyScroller_MaxTime = 500
 "
-"   let g:SexyScroller_MaxTime = 500
+"       Sets the maximum time for long scrolls.
 "
-" Power users may want this a little lower.
+"   :let g:SexyScroller_EasingStyle = 1
 "
-" Set the easing style:
+"       Sets the easing style (how scrolling accelerates and decelerates),
+"       where:
 "
-"   let g:SexyScroller_EasingStyle = 1
+"              1 = start fast, finish slowly            (practical)
 "
-" where 1 = start fast, end slow
-"       2 = start slow, get faster, end slow
-"       3 = constant
+"              2 = start slow, get faster, end slowly   (sexiest)
 "
-" For eye candy, set MaxTime to 1200 and EasingStyle to 2
-" Power users may prefer MaxTime a little lower, and EasingStyle 1 or 3
+"              3 = constant speed                       (dull)
+"
+" For eye candy, set MaxTime to 1200 and EasingStyle to 2.
+" Power users may prefer MaxTime a little lower, and EasingStyle 1 or 3.
+"
+"   :let g:SexyScroller_DetectPendingKeys = 1   /   0
+"
+"       Enable / disable experimental feature.  This will interrupt an ongoing
+"       animation if you press another key.  If the key you pressed causes
+"       more scrolling, the animation will accelerate, but if not you will
+"       invoke a minor bug: jump immediately to the destination, and witness
+"       the rest of the animation the next time you move the cursor!  :P
 
 " ISSUES:
 "
@@ -44,11 +58,9 @@
 "
 " - Resizing the window may cause the cursor to move but CursorMoved will not be fired until later.
 "
-" TODO: This is very nice as a general purpose page scroller, but does not handle cursor scrolling very well.  It works on my setup, which uses cursorline, but users without cursorline may not see the cursor animating.  If we *really* want to achieve this, we could fire keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)
+" TODO: This is very nice as a general purpose page scroller, but does not handle cursor scrolling very well.  Well it's ok if cursorline is enabled, but users without cursorline may not see the cursor animating.  If we *really* want to achieve this, we could fire keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)
 "
 " TODO: We should store/reset lazyredraw if we are going to continue to clobber it.
-
-finish
 
 if !has("float")
   echo "smooth_scroller requires the +float feature, which is missing"
@@ -95,11 +107,11 @@ augroup Smooth_Scroller
   " BufferScrolled, but Vim does not fire enough events for us to hook to!
 augroup END
 
-" |CTRL-E| and |CTRL-Y| do not fire any events for us to detect, but they do scroll the window.
-if maparg("<C-E>", 'n') == ""
+" |CTRL-E| and |CTRL-Y| scroll the window, but do not fire any events for us to detect.
+if maparg("<C-E>", 'n') == ''
   nnoremap <silent> <C-E> <C-E>:call <SID>CheckForChange(1)<CR>
 endif
-if maparg("<C-Y>", 'n') == ""
+if maparg("<C-Y>", 'n') == ''
   nnoremap <silent> <C-Y> <C-Y>:call <SID>CheckForChange(1)<CR>
 endif
 " CONSIDER: We could let the user provide a list of other key mappings for which we want CheckForChange to run afterwards.  Alternatively, if he has custom mappings, he could just add a non-movement movement to them, to generate a CursorMoved event.
@@ -158,7 +170,8 @@ function! s:smooth_scroll(start, end)
 
   while 1
 
-    let elapsed = s:get_ms_since(startTime)
+    let elapsed = s:get_ms_since(startTime) + 15
+    " GVim is a bit laggy, so +15 renders the position we would be in at the end of the sleep below.
     let thruTime = elapsed * 1.0 / totalTime
     if elapsed >= totalTime
       let thruTime = 1.0
@@ -189,7 +202,7 @@ function! s:smooth_scroll(start, end)
     exec "sleep 15m"
 
     " Stop the current animation if the user presses a new key.
-    " We jump to the end position, but by returning 1 we will not clobber oldPosition.  This means if the pending keys also cause animation, it will continue scrolling from our current position.  Unfortunately it also means if the pending keys do *not* cause animation, we will leave a dirty oldPosition that will cause an unwanted animation later.
+    " We must jump to the end position, to process the key correctly, but by returning 1 we will not clobber oldPosition.  This means if the pending keys also cause animation, it will continue scrolling from our current position.  Unfortunately it also means if the pending keys do *not* cause animation, we will leave a dirty oldPosition that will cause an unwanted animation later.
     " To avoid that, we could set a time after which oldPosition should be stored without causing an animation.
     " Anyway even when it does "work", the transition from one animation to the next is not very smooth, because the easing function will no doubt start with a different speed from the current speed.  We would need to retain currentSpeed and make a new easing function based on it.
     " For some reason, PageDown does not always trigger a value in getchar(), although { and } do.
