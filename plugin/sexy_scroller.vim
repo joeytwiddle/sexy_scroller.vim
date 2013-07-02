@@ -203,7 +203,7 @@ function! s:smooth_scroll(start, end)
 
     " Stop the current animation if the user presses a new key.
     " We must jump to the end position, to process the key correctly, but by returning 1 we will not clobber oldPosition.  This means if the pending keys also cause animation, it will continue scrolling from our current position.  Unfortunately it also means if the pending keys do *not* cause animation, we will leave a dirty oldPosition that will cause an unwanted animation later.
-    " To avoid that, we could set a time after which oldPosition should be stored without causing an animation.
+    " To avoid that, we could set a time after which oldPosition should be stored without causing an animation.  Or better, work the other way: set oldPosition to a:end, but set temporary 'doingAnimationFrom' and 'doingAnimationAtTime' vars, which can be picked up if another animation key is detected before the timestamp times out.
     " Anyway even when it does "work", the transition from one animation to the next is not very smooth, because the easing function will no doubt start with a different speed from the current speed.  We would need to retain currentSpeed and make a new easing function based on it.
     " For some reason, PageDown does not always trigger a value in getchar(), although { and } do.
     " If we hold a scrolling key down, with easing style 2, we appear to go nowhere until we release.
