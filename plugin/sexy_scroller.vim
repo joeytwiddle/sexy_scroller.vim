@@ -50,7 +50,7 @@
 
 " ISSUES:
 "
-" - It looks odd after you perform a `/` search with 'incsearch' because Vim has already taken us to the target line.  When ending the search, we jump back to where we started from, and then scroll forwards to the target!  There is no event hook to handle this.  `n` and `N` work fine.  TODO: We could temporarily disable ourself when `/` or `?` are initiated (until the next CursorMove or CursorHold).
+" - It looks odd after you perform a `/` search with 'incsearch' enabled because Vim has already taken us to the target line (without animation).  After ending the search, sexy_scroller jumps back to the previous position, and then scroll forwards to the new target!  There is no event hook to handle this.  This does not affect `n` and `N`, which work fine.  TODO: We could temporarily disable ourself when `/` or `?` are initiated and 'incsearch' is detected (until the next CursorMove or CursorHold).
 "
 " CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SS_Ignore_Next_Movement .  For example this would apply to / and ? with 'hlsearch' enabled, and maybe also to d.
 "
@@ -71,6 +71,8 @@
 " - Animation does not work at all well with mouse scrolling.  I can't think of any way to work around this.  If you scroll with the mouse more than the keys, this plugin might not be for you.
 "
 " - This is very nice as a general purpose page scroller, but as mentioned in the second issue above, it does not display the cursor when scrolling.  This is not really an issue if cursorline is enabled, but users without cursorline probably will not see the cursor animating (at least I don't see it on my system).  If we *really* want to achieve this, we could fire/feed keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)  Alternatively, we can just say that we don't care much about cursor scrolling; this plugin is mainly for animating page scrolling, and cursor movement was an afterthought (or rather a neccessity!).
+"
+" - The ability to scroll smoothly is limited by the presence of long wrapped lines at the top of the window (we cannot set 'topline' to "halfway through line 340"; if line 340 wraps to 6 lines, then we will jump 6 lines when we set 'topline' to 341).
 "
 " CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reproducing the functionality of highlight_line_after_jump.vim)
 "
@@ -116,6 +118,7 @@ command! SexyScrollerToggle call s:ToggleEnabled()
 augroup Smooth_Scroller
   autocmd!
   autocmd CursorMoved * call s:CheckForChange(1)
+  autocmd CursorMovedI * call s:CheckForChange(1)
   autocmd InsertLeave * call s:CheckForChange(0)
   " Unfortunately we would like to fire on other occasions too, e.g.
   " BufferScrolled, but Vim does not offer enough events for us to hook to!
