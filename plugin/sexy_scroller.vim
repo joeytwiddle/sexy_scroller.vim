@@ -40,6 +40,10 @@
 "       directly to the destination.  This feature seems to be working ok now.
 "       Resuming animation looks best with EasingStyle 1.
 "
+"    :SexyScrollerToggle
+"
+"       This command is provided to enable/disable the scrolling:
+"
 " For eye candy, set MaxTime to 1200 and EasingStyle to 2.
 "
 " Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.

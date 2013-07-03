@@ -1,7 +1,7 @@
 sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing.
 By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim (although there are many others)
 
-Options:
+== Options ==
 
 Instead of specifying the scrolling *speed*, SexyScroller asks you to
 specify how *slow* you want scrolling to be.  You can store these options in
@@ -40,11 +40,15 @@ if they key you pressed also causes scrolling, otherwise just jumps
 directly to the destination.  This feature seems to be working ok now.
 Resuming animation looks best with EasingStyle 1.
 
+Finally, a command is provided to enable/disable the scrolling:
+
+    :SexyScrollerToggle
+
 For eye candy, set MaxTime to 1200 and EasingStyle to 2.
 
 Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
 
-ISSUES:
+== Known Issues ==
 
 - It looks odd after you perform a `/` search with 'incsearch' because Vim has already taken us to the target line.  When ending the search, we jump back to where we started from, and then scroll forwards to the target!  There is no event hook to handle this.  `n` and `N` work fine.  TODO: We could temporarily disable ourself when `/` or `?` are initiated (until the next CursorMove or CursorHold).
 
