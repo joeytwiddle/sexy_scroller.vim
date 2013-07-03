@@ -1,5 +1,5 @@
-" sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing
-" By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim
+" sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing.
+" By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim (although there are many others)
 
 " Options:
 "
@@ -33,40 +33,44 @@
 "
 "              3 = constant speed                       (dull)
 "
-" For eye candy, set MaxTime to 1200 and EasingStyle to 2.
-" Power users may prefer MaxTime a little lower, and EasingStyle 1 or 3.
-"
 "   :let g:SexyScroller_DetectPendingKeys = 1   /   0
 "
-"       Enable / disable experimental feature.  This will interrupt an ongoing
-"       animation if you press another key.  If the key you pressed causes
-"       more scrolling, the animation will accelerate, but if not you will
-"       invoke a minor bug: jump immediately to the destination, and witness
-"       the rest of the animation the next time you move the cursor!  :P
+"       Interrupts the animation if you press a key.  Should resume animation
+"       if they key you pressed also causes scrolling, otherwise just jumps
+"       directly to the destination.  This feature seems to be working ok now.
+"       Resuming animation looks best with EasingStyle 1.
+"
+" For eye candy, set MaxTime to 1200 and EasingStyle to 2.
+"
+" Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
 
 " ISSUES:
 "
 " - It looks odd after you perform a `/` search with 'incsearch' because Vim has already taken us to the target line.  When ending the search, we jump back to where we started from, and then scroll forwards to the target!  There is no event hook to handle this.  `n` and `N` work fine.  TODO: We could temporarily disable ourself when `/` or `?` are initiated (until the next CursorMove or CursorHold).
 "
+" CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SS_Ignore_Next_Movement .  For example this would apply to / and ? with 'hlsearch' enabled, and maybe also to d.
+"
 " - I have disabled smooth horizontal animation of the cursor because I cannot see the cursor moving, even with 'cursorcolumn' enabled, so it's pointless!  In fact the cursor is also invisible during vertical scrolling, but 'cursorline' can show the cursor line moving.  A workaround for this might be to split the requested movement into a sequence of smaller movements, rather than using winrestview.  (We would want to avoid re-triggering ourself on those CursorMove events!  Either with :noauto or with a flag.)
 "
-" FIXED: If more movement actions are keyed whilst we are still scrolling (e.g. hit PageDown 10 times), these will each be animated separately.  Even without easing, a small pause is noticeable between animations.  Ideally after a keystroke, we would re-target the final destination.  getchar() may be of use here.
+" - PageUp, PageDown, Ctrl-U and Ctrl-D do not always trigger a getchar(), so DetectPendingKeys does not always work for them.  This may be system-dependent.  Simpler keystrokes like { and } rarely fail.
 "
-" MITIGATED with mapping below (provided the user does not have a mapping already): Although we have mapped |CTRL-E| and |CTRL-Y| we have not yet handled the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  An undesired animation will eventually fire when the cursor moves.
+" Although we have worked around |CTRL-E| and |CTRL-Y| with mappings below, we have not handled any of the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  These will not trigger animation, but an undesired animation will eventually fire later, when the cursor does move.
 "
-" - If the user has set their own mappings for scrolling (which do not move the cursor), then like C-E and C-Y, these will not fire a CursorMoved event, and not initiate animation.  One workaround for this is for the user to add a couple of keystrokes to the end of their mapping, that *will* initiate a CursorMoved and a check for animation.  For example, add <BS><Space> at the end of the mappings (which will work everywhere except the first char in the document).
+" - If the user has set their own mappings for scrolling (which do not move the cursor), then like C-E and C-Y, these will not fire a CursorMoved event, and will not initiate animation.  One workaround for this is for the user to add a couple of keystrokes to the end of their mapping, that *will* initiate a CursorMoved and a check for animation.  For example, add <BS><Space> at the end of the mappings (which will work everywhere except the first char in the document).
 "
 " - Plugins and such which use :noauto (TagList for example) will not fire CursorMoved when it actually happens, leading to an animation occurring later, from a long-gone source to a long-sat-on destination.
 "
 " - Resizing the window may cause the cursor to move but CursorMoved will not be fired until later??
 "
-" - The cursor animates after a mouse click, which does not seem quite right.  But also doesn't bother me enough to fix it.
+" - The cursor animates after a mouse click, which does not feel quite right.  But also doesn't bother me enough to fix it.
 "
 " - Animation does not work at all well with mouse scrolling.  I can't think of any way to work around this.  If you scroll with the mouse more than the keys, this plugin might not be for you.
 "
-" - As mentioned in the second issue above, this is very nice as a general purpose page scroller, but does not handle cursor scrolling very well.  Well it's ok if cursorline is enabled, but users without cursorline probably will not see the cursor animating (at least I don't see it on my system).  If we *really* want to achieve this, we could fire keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)  Alternatively, we can just say that we don't care much about cursor scrolling; this plugin is mainly for animating page scrolling, and cursor movement was an afterthought (or rather a neccessity!).
+" - This is very nice as a general purpose page scroller, but as mentioned in the second issue above, it does not display the cursor when scrolling.  This is not really an issue if cursorline is enabled, but users without cursorline probably will not see the cursor animating (at least I don't see it on my system).  If we *really* want to achieve this, we could fire/feed keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)  Alternatively, we can just say that we don't care much about cursor scrolling; this plugin is mainly for animating page scrolling, and cursor movement was an afterthought (or rather a neccessity!).
 "
-" TODO: We should store/reset lazyredraw if we are going to continue to clobber it.
+" CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reproducing the functionality of highlight_line_after_jump.vim)
+"
+" TODO: We should really store and restore lazyredraw if we are going to continue to clobber it.
 
 if !has("float")
   echo "smooth_scroller requires the +float feature, which is missing"
@@ -96,7 +100,7 @@ if !exists("g:SexyScroller_EasingStyle")
 endif
 
 if !exists("g:SexyScroller_DetectPendingKeys")
-  let g:SexyScroller_DetectPendingKeys = 0
+  let g:SexyScroller_DetectPendingKeys = 1
 endif
 
 if !exists("g:SexyScroller_Debug")
@@ -110,19 +114,17 @@ augroup Smooth_Scroller
   autocmd CursorMoved * call s:CheckForChange(1)
   autocmd InsertLeave * call s:CheckForChange(0)
   " Unfortunately we would like to fire on other occasions too, e.g.
-  " BufferScrolled, but Vim does not fire enough events for us to hook to!
+  " BufferScrolled, but Vim does not offer enough events for us to hook to!
 augroup END
 
 " |CTRL-E| and |CTRL-Y| scroll the window, but do not fire any events for us to detect.
+" If the user has not made a custom mapping for them, we will map them to fix this.
 if maparg("<C-E>", 'n') == ''
   nnoremap <silent> <C-E> <C-E>:call <SID>CheckForChange(1)<CR>
 endif
 if maparg("<C-Y>", 'n') == ''
   nnoremap <silent> <C-Y> <C-Y>:call <SID>CheckForChange(1)<CR>
 endif
-" CONSIDER: We could let the user provide a list of other key mappings for which we want CheckForChange to run afterwards.  Alternatively, if he has custom mappings, he could just add a non-movement movement to them, to generate a CursorMoved event.
-" BUG: I have done this for my C-J and C-K keys.  But the new implementation of g:SexyScroller_DetectPendingKeys seems to fail on G20<C-J> only.  Can't imagine why.
-" TODO: Make a list of exclude keys, and map them so that they set w:SS_Ignore_Next_Movement .  For example this would apply to / and ? with 'hlsearch' enabled, and maybe also to d.
 
 function! s:CheckForChange(actIfChange)
   let w:newPosition = winsaveview()
@@ -163,9 +165,9 @@ function! s:smooth_scroll(start, end)
   let totalTime = max([timeForCursorMove,timeForScroll])
   "let totalTime = timeForCursorMove + timeForScroll
 
-  if g:SexyScroller_Debug
+  "if g:SexyScroller_Debug
     "echo "totalTime=".totalTime." cursor=".timeForCursorMove." (".numLinesToTravel.",".numColumnsToTravel.") scroll=".timeForScroll." (".numLinesToScroll.",".numColumnsToScroll.")"
-  endif
+  "endif
 
   let totalTime = 1.0 * min([g:SexyScroller_MaxTime,max([0,totalTime])])
 
