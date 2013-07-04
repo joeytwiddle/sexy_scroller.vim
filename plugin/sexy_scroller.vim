@@ -1,37 +1,43 @@
 " sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing.
-" By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim (although there are many others)
-
-" Options:
+" By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim, one of many Ctrl-U/Ctrl-D scrollers.
+"
+" Usually when you scroll the buffer or motion to a different part of the
+" document, Vim will jump there immediately.  But with SexyScroller, Vim will
+" scroll to the new position smoothly.  As well as looking pretty, this
+" provides you with visual feedback about the distance you have travelled.
+"
+" == Options ==
 "
 " Instead of specifying the scrolling *speed*, SexyScroller asks you to
 " specify how *slow* you want scrolling to be.  You can store these options in
 " your .vimrc once you are happy with them.
 "
-"   :let g:SexyScroller_CursorTime = 5
-"
-"       Sets the time taken to move the cursor one line (in milliseconds), or
-"       set it to 0 to never scroll the cursor.  However, you may not see the
-"       cursor during animation, in which case you can   :set cursorline
-"
 "   :let g:SexyScroller_ScrollTime = 10
 "
-"       Sets the time taken to scroll the buffer one line.  (I like to pretend
-"       the buffer is "heavier" than the cursor.)
+"       Sets the time it takes for the buffer to scroll one line or column.
+"       (I like to pretend the buffer is "heavier" than the cursor.)
+"
+"   :let g:SexyScroller_CursorTime = 5
+"
+"       Sets the time it takes for the cursor to travel one line (in
+"       milliseconds).  Set it to 0 to never animate the cursor.  Anyway,
+"       since the cursor is usually not visible during animation, you may need
+"       to  :set cursorline  for this option to work.
 "
 "   :let g:SexyScroller_MaxTime = 500
 "
-"       Sets the maximum time for long scrolls.
+"       Sets the maximum time that longer scrolls can take.
 "
 "   :let g:SexyScroller_EasingStyle = 1
 "
-"       Sets the easing style (how scrolling accelerates and decelerates),
+"       Choose the easing style (how scrolling accelerates and decelerates),
 "       where:
 "
-"              1 = start fast, finish slowly            (practical)
+"           1 = start fast, finish slowly            (recommended)
 "
-"              2 = start slow, get faster, end slowly   (sexiest)
+"           2 = start slow, get faster, end slowly   (sexiest)
 "
-"              3 = constant speed                       (dull)
+"           3 = constant speed                       (dull)
 "
 "   :let g:SexyScroller_DetectPendingKeys = 1   /   0
 "
@@ -48,40 +54,50 @@
 "
 " Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
 
-" ISSUES:
+" == Issues ==
 "
-" - It looks odd after you perform a `/` search with 'incsearch' enabled because Vim has already taken us to the target line (without animation).  After ending the search, sexy_scroller jumps back to the previous position, and then scroll forwards to the new target!  There is no event hook to handle this.  This does not affect `n` and `N`, which work fine.  TODO: We could temporarily disable ourself when `/` or `?` are initiated and 'incsearch' is detected (until the next CursorMove or CursorHold).
+" - The script has trouble detecting a scroll event if the cursor did not move.  This is because we listen for CursorMoved events; Vim does not provide any WindowScrolled event!
 "
-" CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SS_Ignore_Next_Movement .  For example this would apply to / and ? with 'hlsearch' enabled, and maybe also to d.
+"   If the script does fail to detect when a scroll occurs, it will eventually notice it later, when the cursor *does* move.  This will trigger an animation later than expected from a point which we already left some time ago.  This looks wrong!
 "
-" - I have disabled smooth horizontal animation of the cursor because I cannot see the cursor moving, even with 'cursorcolumn' enabled, so it's pointless!  In fact the cursor is also invisible during vertical scrolling, but 'cursorline' can show the cursor line moving.  A workaround for this might be to split the requested movement into a sequence of smaller movements, rather than using winrestview.  (We would want to avoid re-triggering ourself on those CursorMove events!  Either with :noauto or with a flag.)
+"   Since this affects <C-E> and <C-Y>, we remap them to compensate.  However if you have mapped any alternative keybinds or commands which scroll the page without moving the cursor, these will not work.  A workaround is to append <BS><Space> to any such mappings, to move the cursor and move it back again!
 "
-" - PageUp, PageDown, Ctrl-U and Ctrl-D do not always trigger a getchar(), so DetectPendingKeys does not always work for them.  This may be system-dependent.  Simpler keystrokes like { and } rarely fail.
+"   Other keys similarly affected are the various `z` commands under |scroll-cursor|.  They are hard to map.
 "
-" Although we have worked around |CTRL-E| and |CTRL-Y| with mappings below, we have not handled any of the z commands under |scroll-cursor|.  They are hard to map and do not fire any events.  These will not trigger animation, but an undesired animation will eventually fire later, when the cursor does move.
+" - We cannot detect the scrolling through the document that occurs during a `/` search when 'incsearch' is enabled, again from a lack of events.  (This does not affect `n` and `N`, which work fine.)  TODO: We could temporarily disable animations when `/` or `?` are initiated and 'incsearch' is enabled (until the next CursorMoved or a CursorHold).  Alternatively, we could attempt to implement a fake `/` interface.
 "
-" - If the user has set their own mappings for scrolling (which do not move the cursor), then like C-E and C-Y, these will not fire a CursorMoved event, and will not initiate animation.  One workaround for this is for the user to add a couple of keystrokes to the end of their mapping, that *will* initiate a CursorMoved and a check for animation.  For example, add <BS><Space> at the end of the mappings (which will work everywhere except the first char in the document).
+" - I have disabled smooth horizontal animation of the cursor because I can never see the cursor when it's moving, even with 'cursorcolumn' enabled!  Scrolling in this case is pointless: it just looks like Vim is briefly frozen!  In fact the cursor is also invisible during vertical scrolling, although 'cursorline' is visible while it is moving, if enabled.  CONSIDER TODO: A workaround for both axes might be to perform the requested movement as a sequence of feedkeys(), rather than calls to winrestview.  We would need to avoid re-triggering ourself on those CursorMoved events, with :noauto or with a flag.
 "
-" - Plugins and such which use :noauto (TagList for example) will not fire CursorMoved when it actually happens, leading to an animation occurring later, from a long-gone source to a long-sat-on destination.
+" - PageUp, PageDown, Ctrl-U and Ctrl-D do not consistently trigger a getchar(), so DetectPendingKeys does not always work for them.  This may be system-dependent.  Simpler keystrokes like { and } never fail.  The result is that subsequent keypresses will not interrupt animation, but will start a second animation separately after the animation of the earlier keypresses.
 "
-" - Resizing the window may cause the cursor to move but CursorMoved will not be fired until later??
+" - Plugins which use :noauto (TagList for example) will not fire CursorMoved when they actually happen.  If we then focus the window later, this will lead to late detection and an out-of-date animation being performed.
 "
-" - The cursor animates after a mouse click, which does not feel quite right.  But also doesn't bother me enough to fix it.
+" - Resizing the window may cause the topline/leftcol to change without firing a CursorMoved event, with the usual consequences.
 "
-" - Animation does not work at all well with mouse scrolling.  I can't think of any way to work around this.  If you scroll with the mouse more than the keys, this plugin might not be for you.
+" - With 'cursorline' enabled, the cursor will animate after a mouse click, which does not look natural.  In this case, it should simply jump without any animation.  I cannot think of any way to fix this.
 "
-" - This is very nice as a general purpose page scroller, but as mentioned in the second issue above, it does not display the cursor when scrolling.  This is not really an issue if cursorline is enabled, but users without cursorline probably will not see the cursor animating (at least I don't see it on my system).  If we *really* want to achieve this, we could fire/feed keyboard events instead of calling winrestview when the cursor should scroll but not the page.  (I.e. winrestview(a:start) followed by a bunch of movement actions (perhaps through feedkeys), following by winrestview(a:end) just to make sure.)  Alternatively, we can just say that we don't care much about cursor scrolling; this plugin is mainly for animating page scrolling, and cursor movement was an afterthought (or rather a neccessity!).
+" - Animation does not work well with mouse scrolling.  I can't think of any way to work around this.  If you scroll with the mouse more than the keys, this plugin might start ao annoy you.  But it might be the thing that trains you to improve your Vimming.  :)
 "
-" - The ability to scroll smoothly is limited by the presence of long wrapped lines at the top of the window (we cannot set 'topline' to "halfway through line 340"; if line 340 wraps to 6 lines, then we will jump 6 lines when we set 'topline' to 341).
+" - Our ability to scroll smoothly is limited by the presence of long wrapped lines at the top of the window. (For example if line 340 is long, wrapping to 6 screen lines, then since we cannot set 'topline' to "partway through line 340", the displayed text is forced to jump 6 lines when we set 'topline' to 341.)
+"
+" - Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, even if those 1000 lines have been folded down and appear visually as one line!
+"
+" CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SexyScroller_Ignore_Next_Movement.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
 "
 " CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reproducing the functionality of highlight_line_after_jump.vim)
 "
-" TODO: We should really store and restore lazyredraw if we are going to continue to clobber it.
+" TODO: We should politely store and restore lazyredraw if we are going to continue to clobber it.
+
+
 
 if !has("float")
   echo "smooth_scroller requires the +float feature, which is missing"
   finish
 endif
+
+
+
+" == Options == "
 
 if !exists("g:SexyScroller_Enabled")
   let g:SexyScroller_Enabled = 1
@@ -113,6 +129,10 @@ if !exists("g:SexyScroller_Debug")
   let g:SexyScroller_Debug = 0
 endif
 
+
+
+" == Setup == "
+
 command! SexyScrollerToggle call s:ToggleEnabled()
 
 augroup Smooth_Scroller
@@ -132,6 +152,10 @@ endif
 if maparg("<C-Y>", 'n') == ''
   nnoremap <silent> <C-Y> <C-Y>:call <SID>CheckForChange(1)<CR>
 endif
+
+
+
+" == Functions == "
 
 function! s:CheckForChange(actIfChange)
   let w:newPosition = winsaveview()
@@ -188,22 +212,23 @@ function! s:smooth_scroll(start, end)
   " Because arguments are immutable
   let start = a:start
 
-  " If we have *just* interrupted a previous animation, then we continue from where he left off.
+  " If we have *just* interrupted a previous animation, then continue from where we left off.
   if exists("w:interruptedAnimationAt")
     let timeSinceInterruption = s:get_ms_since(w:interruptedAnimationAt)
     if g:SexyScroller_Debug
       echo "Checking interrupted animation, timeSince=".float2nr(timeSinceInterruption)." remaining=".float2nr(w:interruptedAnimationTimeRemaining)
     endif
-    if timeSinceInterruption < 20
+    if timeSinceInterruption < 50
       let start = w:interruptedAnimationFrom
       if g:SexyScroller_Debug
         echo "Continuing interrupted animation with ".float2nr(w:interruptedAnimationTimeRemaining)." remaining, from ".start["topline"]
       endif
       " Secondary keystrokes should not make the animation finish sooner than it would have!
-      " But I don't think we should add the times together.
       if totalTime < w:interruptedAnimationTimeRemaining
         let totalTime = w:interruptedAnimationTimeRemaining
       endif
+      " We could add the times together.  Not sure how I feel about this.
+      "let totalTime = 1.0 * min([g:SexyScroller_MaxTime,float2nr(totalTime + w:interruptedAnimationTimeRemaining)])
     endif
     unlet w:interruptedAnimationAt
   endif
@@ -241,30 +266,25 @@ function! s:smooth_scroll(start, end)
 
     exec "sleep 15m"
 
-    " Stop the current animation if the user presses a new key.
-    " We must jump to the end position, to process the key correctly, but by returning 1 we will not clobber oldPosition.  This means if the pending keys also cause animation, it will continue scrolling from our current position.  Unfortunately it also means if the pending keys do *not* cause animation, we will leave a dirty oldPosition that will cause an unwanted animation later.
-    " To avoid that, we could set a time after which oldPosition should be stored without causing an animation.  Or better, work the other way: set oldPosition to a:end, but set temporary 'doingAnimationFrom' and 'doingAnimationAtTime' vars, which can be picked up if another animation key is detected before the timestamp times out.
-    " Anyway even when it does "work", the transition from one animation to the next is not very smooth, because the easing function will no doubt start with a different speed from the current speed.  We would need to retain currentSpeed and make a new easing function based on it.
-    " For some reason, PageDown does not always trigger a value in getchar(), although { and } do.
-    " If we hold a scrolling key down, with easing style 2, we appear to go nowhere until we release.
-    " Basically this was an afterthought, and the animation algorithm will need to change if we want to solve it properly.
+    " Break out of the current animation if the user presses a new key.
+    " Set some vars so that we can resume this animation from where it was interrupted, if the pending keys trigger further motion.
+    " If they don't the animation simply jumps to the destination.
     if g:SexyScroller_DetectPendingKeys && getchar(1)
       let w:oldPosition = a:end
       let w:interruptedAnimationAt = reltime()
       let w:interruptedAnimationFrom = current
-      "let w:interruptedAnimationTimeRemaining = totalTime * notThru   " No because notThru is an eased value
       let w:interruptedAnimationTimeRemaining = totalTime * (1.0 - thruTime)
-      "let w:interruptedAnimationTimeRemaining = totalTime - elapsed
       if g:SexyScroller_Debug
         echo "Pending keys detected at ".reltimestr(reltime())." remaining=".float2nr(w:interruptedAnimationTimeRemaining)
       endif
-      "let w:oldPosition = current
-      " We must set to a:end, to be in the right place to process the next char, whether it is further movement or an edit.
-      " Causes flicker without lazyredraw enabled
+      " We must now jump to a:end, to be in the right place to process the next keypress, regardless whether it is a movement or edit command.
+      " If we do end up resuming this animation, this winrestview will cause flicker, unless we set lazyredraw to prevent it.
       set lazyredraw
       call winrestview(a:end)
-      "return 1
       return 0
+      " Old approach:
+      "let w:oldPosition = current
+      "return 1
     endif
 
   endwhile
@@ -275,7 +295,7 @@ function! s:smooth_scroll(start, end)
 
 endfunction
 
-function! s:get_ms_since(time)
+function! s:get_ms_since(time)   " Ta Ter
   let cost = split(reltimestr(reltime(a:time)), '\.')
   return str2nr(cost[0])*1000 + str2nr(cost[1])/1000.0
 endfunction
@@ -290,3 +310,7 @@ function! s:ToggleEnabled()
   echo "Sexy Scroller is " . ( g:SexyScroller_Enabled ? "en" : "dis" ) . "abled"
 endfunction
 
+
+
+
+" vim: wrap textwidth=0 wrapmargin=0
