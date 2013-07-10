@@ -50,9 +50,12 @@
 "
 "       This command is provided to enable/disable the scrolling:
 "
-" For eye candy, set MaxTime to 1200 and EasingStyle to 2.
+" For eye candy, try MaxTime=1200, EasingStyle=2 and increase ScrollTime as
+" well.  This can help to visualise the distance travelled when moving through
+" a document.
 "
 " Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
+" This will make Vim feel more like normal (more responsive).
 
 " == Issues ==
 "
@@ -72,7 +75,7 @@
 "
 " - Plugins which use :noauto (TagList for example) will not fire CursorMoved when they actually happen.  If we then focus the window later, this will lead to late detection and an out-of-date animation being performed.
 "
-" - Resizing the window may cause the topline/leftcol to change without firing a CursorMoved event, with the usual consequences.
+" - Resizing the window may cause the topline/leftcol to change without firing a CursorMoved event, with the usual consequences.  This also happens when splitting a window.  Especially if you have scrolloff set!
 "
 " - With 'cursorline' enabled, the cursor will animate after a mouse click, which does not look natural.  In this case, it should simply jump without any animation.  I cannot think of any way to fix this.
 "
@@ -235,8 +238,8 @@ function! s:smooth_scroll(start, end)
 
   while 1
 
-    let elapsed = s:get_ms_since(startTime) + 15
-    " GVim is a bit laggy, so +15 renders the position we should be in at the end of the sleep below.
+    let elapsed = s:get_ms_since(startTime) + 8
+    " +8 renders the position we should be in half way through the sleep 15m below.
     let thruTime = elapsed * 1.0 / totalTime
     if elapsed >= totalTime
       let thruTime = 1.0
