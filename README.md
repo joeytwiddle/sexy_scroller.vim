@@ -1,5 +1,5 @@
 sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing.
-By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim (although there are many others)
+By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim, one of many Ctrl-U/Ctrl-D scrollers.
 
 Usually when you scroll the buffer or motion to a different part of the
 document, Vim will jump there immediately.  But with SexyScroller, Vim will
@@ -12,48 +12,47 @@ Instead of specifying the scrolling *speed*, SexyScroller asks you to
 specify how *slow* you want scrolling to be.  You can store these options in
 your .vimrc once you are happy with them.
 
-    :let g:SexyScroller_CursorTime = 5
-
-Sets the time taken to move the cursor one line (in milliseconds), or
-set it to 0 to never scroll the cursor.  However, you may not see the
-cursor during animation, in which case you can   :set cursorline
+Set the time it takes (in milliseconds) for the buffer to scroll one line or
+column.  (I like to pretend the buffer is "heavier" than the cursor.)
 
     :let g:SexyScroller_ScrollTime = 10
 
-Sets the time taken to scroll the buffer one line.  (I like to pretend
-the buffer is "heavier" than the cursor.)
+Set the time it takes for the cursor to travel one line.
+Probably only visible if you have `:set cursorline`.  Set it to 0 to never
+animate the cursor.
+
+    :let g:SexyScroller_CursorTime = 5
+
+Set the maximum time that longer scrolls can take:
 
     :let g:SexyScroller_MaxTime = 500
 
-Sets the maximum time for long scrolls.
+Choose the easing style (how scrolling accelerates and decelerates):
 
     :let g:SexyScroller_EasingStyle = 1
 
-Sets the easing style (how scrolling accelerates and decelerates),
-where:
+where
+      1 = start fast, finish slowly            (recommended)
+      2 = start slow, get faster, end slowly   (sexiest)
+      3 = constant speed                       (dull)
 
-       1 = start fast, finish slowly            (practical)
-
-       2 = start slow, get faster, end slowly   (sexiest)
-
-       3 = constant speed                       (dull)
+Interrupts the animation if you press a key.  Should resume animation if they
+key you pressed also causes scrolling, otherwise just jumps directly to the
+destination.  This feature seems to be working ok now.  Resuming animation
+looks best with EasingStyle 1.
 
     :let g:SexyScroller_DetectPendingKeys = 1   /   0
 
-Interrupts the animation if you press a key.  Should resume animation
-if they key you pressed also causes scrolling, otherwise just jumps
-directly to the destination.  This feature seems to be working ok now.
-Resuming animation looks best with EasingStyle 1.
-
-Finally, a command is provided to enable/disable the scrolling:
+This command is provided to enable/disable the scrolling:
 
     :SexyScrollerToggle
 
-For eye candy, set MaxTime to 1200 and EasingStyle to 2.
+For eye candy, try MaxTime=1200, EasingStyle=2 and increase ScrollTime as
+well.  This can help to visualise the distance travelled when moving through
+a document.
 
 Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
-
-
+This will make Vim feel more like normal (more responsive).
 
 == Issues ==
 
@@ -73,7 +72,7 @@ Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
 
 - Plugins which use :noauto (TagList for example) will not fire CursorMoved when they actually happen.  If we then focus the window later, this will lead to late detection and an out-of-date animation being performed.
 
-- Resizing the window may cause the topline/leftcol to change without firing a CursorMoved event, with the usual consequences.
+- Resizing the window may cause the topline/leftcol to change without firing a CursorMoved event, with the usual consequences.  This also happens when splitting a window.  Especially if you have scrolloff set!
 
 - With 'cursorline' enabled, the cursor will animate after a mouse click, which does not look natural.  In this case, it should simply jump without any animation.  I cannot think of any way to fix this.
 

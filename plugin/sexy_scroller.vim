@@ -12,43 +12,40 @@
 " specify how *slow* you want scrolling to be.  You can store these options in
 " your .vimrc once you are happy with them.
 "
-"   :let g:SexyScroller_ScrollTime = 10
+" Set the time it takes (in milliseconds) for the buffer to scroll one line or
+" column.  (I like to pretend the buffer is "heavier" than the cursor.)
 "
-"       Sets the time it takes for the buffer to scroll one line or column.
-"       (I like to pretend the buffer is "heavier" than the cursor.)
+"     :let g:SexyScroller_ScrollTime = 10
 "
-"   :let g:SexyScroller_CursorTime = 5
+" Set the time it takes for the cursor to travel one line.
+" Probably only visible if you have `:set cursorline`.  Set it to 0 to never
+" animate the cursor.
 "
-"       Sets the time it takes for the cursor to travel one line (in
-"       milliseconds).  Set it to 0 to never animate the cursor.  Anyway,
-"       since the cursor is usually not visible during animation, you may need
-"       to  :set cursorline  for this option to work.
+"     :let g:SexyScroller_CursorTime = 5
 "
-"   :let g:SexyScroller_MaxTime = 500
+" Set the maximum time that longer scrolls can take:
 "
-"       Sets the maximum time that longer scrolls can take.
+"     :let g:SexyScroller_MaxTime = 500
 "
-"   :let g:SexyScroller_EasingStyle = 1
+" Choose the easing style (how scrolling accelerates and decelerates):
 "
-"       Choose the easing style (how scrolling accelerates and decelerates),
-"       where:
+"     :let g:SexyScroller_EasingStyle = 1
 "
-"           1 = start fast, finish slowly            (recommended)
+" where
+"       1 = start fast, finish slowly            (recommended)
+"       2 = start slow, get faster, end slowly   (sexiest)
+"       3 = constant speed                       (dull)
 "
-"           2 = start slow, get faster, end slowly   (sexiest)
+" Interrupts the animation if you press a key.  Should resume animation if they
+" key you pressed also causes scrolling, otherwise just jumps directly to the
+" destination.  This feature seems to be working ok now.  Resuming animation
+" looks best with EasingStyle 1.
 "
-"           3 = constant speed                       (dull)
+"     :let g:SexyScroller_DetectPendingKeys = 1   /   0
 "
-"   :let g:SexyScroller_DetectPendingKeys = 1   /   0
+" This command is provided to enable/disable the scrolling:
 "
-"       Interrupts the animation if you press a key.  Should resume animation
-"       if they key you pressed also causes scrolling, otherwise just jumps
-"       directly to the destination.  This feature seems to be working ok now.
-"       Resuming animation looks best with EasingStyle 1.
-"
-"    :SexyScrollerToggle
-"
-"       This command is provided to enable/disable the scrolling:
+"     :SexyScrollerToggle
 "
 " For eye candy, try MaxTime=1200, EasingStyle=2 and increase ScrollTime as
 " well.  This can help to visualise the distance travelled when moving through
