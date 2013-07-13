@@ -31,13 +31,15 @@ Set the maximum amount of time that longer scrolls can take:
 
 Choose the easing style (how scrolling accelerates and decelerates):
 
-    :let g:SexyScroller_EasingStyle = 1
+    :let g:SexyScroller_EasingStyle = 2
 
 where
 
-  - 1 = start fast, finish slowly            (recommended)
-  - 2 = start slow, get faster, end slowly   (sexiest)
-  - 3 = constant speed                       (dull)
+  - 1 = start fast, finish slowly            (like 2 but less so)
+  - 2 = start very fast, finish very slowly  (recommended, default)
+  - 3 = start slowly, get faster, end slowly (sexy)
+  - 4 = start very slowly, end very slowly   (like 3 but more so)
+  - ? = constant speed                       (dull)
 
 Interrupts the animation if you press a key.  Resumes the animation if they
 key you pressed causes further scrolling, otherwise just jumps directly to
@@ -49,11 +51,11 @@ This command is provided to enable/disable the scrolling:
 
     :SexyScrollerToggle
 
-For eye candy, try MaxTime=1200, EasingStyle=2 and increase ScrollTime as
+For eye candy, try MaxTime=1200, EasingStyle=3 and increase ScrollTime as
 well.  This can help to visualise the distance travelled when moving through
 a document.
 
-Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
+Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 0.
 This will make Vim feel more like normal (more responsive).
 
 # Issues
@@ -74,7 +76,7 @@ This will make Vim feel more like normal (more responsive).
 
 - Plugins which use :noauto (TagList for example) will not fire CursorMoved when they actually happen.  If we then focus the window later, this will lead to late detection and an out-of-date animation being performed.
 
-- Resizing the window may cause the topline/leftcol to change without firing a CursorMoved event, with the usual consequences.  This also happens when splitting a window.  Especially if you have scrolloff set!
+- Resizing the window may cause the topline/leftcol to change without firing a CursorMoved event, with the usual consequences.  This also happens when splitting a window.  Especially if you have scrolloff set!  TODO: Solution: Don't do any scrolling if we detect the size of the window has changed.
 
 - With 'cursorline' enabled, the cursor will animate after a mouse click, which does not look natural.  In this case, it should simply jump without any animation.  I cannot think of any way to fix this.
 

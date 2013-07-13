@@ -31,13 +31,15 @@
 "
 " Choose the easing style (how scrolling accelerates and decelerates):
 "
-"     :let g:SexyScroller_EasingStyle = 1
+"     :let g:SexyScroller_EasingStyle = 2
 "
 " where
 "
-"   - 1 = start fast, finish slowly            (recommended)
-"   - 2 = start slow, get faster, end slowly   (sexiest)
-"   - 3 = constant speed                       (dull)
+"   - 1 = start fast, finish slowly            (like 2 but less so)
+"   - 2 = start very fast, finish very slowly  (recommended, default)
+"   - 3 = start slowly, get faster, end slowly (sexy)
+"   - 4 = start very slowly, end very slowly   (like 3 but more so)
+"   - ? = constant speed                       (dull)
 "
 " Interrupts the animation if you press a key.  Resumes the animation if they
 " key you pressed causes further scrolling, otherwise just jumps directly to
@@ -49,11 +51,11 @@
 "
 "     :SexyScrollerToggle
 "
-" For eye candy, try MaxTime=1200, EasingStyle=2 and increase ScrollTime as
+" For eye candy, try MaxTime=1200, EasingStyle=3 and increase ScrollTime as
 " well.  This can help to visualise the distance travelled when moving through
 " a document.
 "
-" Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
+" Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 0.
 " This will make Vim feel more like normal (more responsive).
 
 " # Issues
@@ -251,7 +253,13 @@ function! s:smooth_scroll(start, end)
     if g:SexyScroller_EasingStyle == 1
       let thru = cos( 0.5 * pi * (-1.0 + thruTime) )         " fast->slow
     elseif g:SexyScroller_EasingStyle == 2
-      let thru = 0.5 + 0.5 * cos( pi * (-1.0 + thruTime) )   " slow->fast->slow
+      let c    = cos( 0.5 * pi * (-1.0 + thruTime) )
+      let thru = sqrt(c)                                     " very fast -> very slow
+    elseif g:SexyScroller_EasingStyle == 3
+      let thru = 0.5 + 0.5 * cos( pi * (-1.0 + thruTime) )   " slow -> fast -> slow
+    elseif g:SexyScroller_EasingStyle == 4
+      let c    = 0.5 + 0.5 * cos( pi * (-1.0 + thruTime) )
+      let thru = sqrt(c)                                     " very slow -> very fast -> very slow
     else
       let thru = thruTime
     endif
