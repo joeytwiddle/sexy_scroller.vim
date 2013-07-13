@@ -6,14 +6,14 @@ document, Vim will jump there immediately.  But with SexyScroller, Vim will
 scroll to the new position smoothly.  As well as looking pretty, this
 provides you with visual feedback about the distance you have travelled.
 
-== Options ==
+# Options
 
 Instead of specifying the scrolling *speed*, SexyScroller asks you to
 specify how *slow* you want scrolling to be.  You can store these options in
 your .vimrc once you are happy with them.
 
 Set the time it takes (in milliseconds) for the buffer to scroll one line or
-column.  (I like to pretend the buffer is "heavier" than the cursor.)
+column.
 
     :let g:SexyScroller_ScrollTime = 10
 
@@ -23,7 +23,9 @@ animate the cursor.
 
     :let g:SexyScroller_CursorTime = 5
 
-Set the maximum time that longer scrolls can take:
+(I like to pretend the cursor is "lighter" than the buffer.)
+
+Set the maximum amount of time that longer scrolls can take:
 
     :let g:SexyScroller_MaxTime = 500
 
@@ -32,14 +34,14 @@ Choose the easing style (how scrolling accelerates and decelerates):
     :let g:SexyScroller_EasingStyle = 1
 
 where
-      1 = start fast, finish slowly            (recommended)
-      2 = start slow, get faster, end slowly   (sexiest)
-      3 = constant speed                       (dull)
 
-Interrupts the animation if you press a key.  Should resume animation if they
-key you pressed also causes scrolling, otherwise just jumps directly to the
-destination.  This feature seems to be working ok now.  Resuming animation
-looks best with EasingStyle 1.
+  - 1 = start fast, finish slowly            (recommended)
+  - 2 = start slow, get faster, end slowly   (sexiest)
+  - 3 = constant speed                       (dull)
+
+Interrupts the animation if you press a key.  Resumes the animation if they
+key you pressed causes further scrolling, otherwise just jumps directly to
+the destination.  Resuming animation looks best with EasingStyle 1.
 
     :let g:SexyScroller_DetectPendingKeys = 1   /   0
 
@@ -54,13 +56,13 @@ a document.
 Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 3.
 This will make Vim feel more like normal (more responsive).
 
-== Issues ==
+# Issues
 
 - The script has trouble detecting a scroll event if the cursor did not move.  This is because we listen for CursorMoved events; Vim does not provide any WindowScrolled event!
 
   If the script does fail to detect when a scroll occurs, it will eventually notice it later, when the cursor *does* move.  This will trigger an animation later than expected from a point which we already left some time ago.  This looks wrong!
 
-  Since this affects <C-E> and <C-Y>, we remap them to compensate.  However if you have mapped any alternative keybinds or commands which scroll the page without moving the cursor, these will not work.  A workaround is to append <BS><Space> to any such mappings, to move the cursor and move it back again!
+  Since this affects `<C-E>` and `<C-Y>`, we remap them to compensate.  However if you have mapped any alternative keybinds or commands which scroll the page without moving the cursor, these will not work.  A workaround is to append `<BS><Space>` to any such mappings, to move the cursor and move it back again!
 
   Other keys similarly affected are the various `z` commands under |scroll-cursor|.  They are hard to map.
 
