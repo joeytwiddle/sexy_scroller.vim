@@ -260,8 +260,8 @@ function! s:smooth_scroll(start, end)
     elseif g:SexyScroller_EasingStyle == 3
       let thru = 0.5 + 0.5 * cos( pi * (-1.0 + thruTime) )   " slow -> fast -> slow
     elseif g:SexyScroller_EasingStyle == 4
-      let c    = 0.5 + 0.5 * cos( pi * (-1.0 + thruTime) )
-      let thru = sqrt(c)                                     " very slow -> very fast -> very slow
+      let cpre = cos( pi * (-1.0 + thruTime) )
+      let thru = 0.5 + 0.5 * sqrt(abs(cpre)) * ( cpre > 0 ? +1 : -1 )    " very slow -> very fast -> very slow
     else
       let thru = thruTime
     endif
