@@ -1,5 +1,7 @@
 " sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing.
 " By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim, one of many Ctrl-U/Ctrl-D scrollers.
+" Not to be confused with daylilyfield/sexyscroll.vim which lacks easing.
+" I have not yet seen any other smooth-scrolling scripts that provide easing, operate on general movements, or use winrestview instead of keymappings/cursorhold.
 "
 " Usually when you scroll the buffer or motion to a different part of the
 " document, Vim will jump there immediately.  But with SexyScroller, Vim will
