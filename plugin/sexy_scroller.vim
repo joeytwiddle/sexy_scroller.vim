@@ -31,7 +31,7 @@
 "
 "     :let g:SexyScroller_MaxTime = 500
 "
-" Choose the easing style (how scrolling accelerates and decelerates):
+" Choose the easing style (how scrolling accelerates and deccelerates):
 "
 "     :let g:SexyScroller_EasingStyle = 2
 "
@@ -45,7 +45,7 @@
 "
 " Interrupts the animation if you press a key.  Resumes the animation if they
 " key you pressed causes further scrolling, otherwise just jumps directly to
-" the destination.  Resuming animation looks best with EasingStyle 1.
+" the destination.  Resuming animation looks best with EasingStyle 1 or 2.
 "
 "     :let g:SexyScroller_DetectPendingKeys = 1   /   0
 "
@@ -86,7 +86,7 @@
 "
 " - Our ability to scroll smoothly is limited by the presence of long wrapped lines at the top of the window. (For example if line 340 is long, wrapping to 6 screen lines, then since we cannot set 'topline' to "partway through line 340", the displayed text is forced to jump 6 lines when we set 'topline' to 341.)
 "
-" - Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, even if those 1000 lines have been folded down and appear visually as one line!
+" - Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, even if those 1000 lines have been folded down and appear visually as one line!  TODO: To fix this we could check winline() throughout instead of winrestview()["lnum"].
 "
 " CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SexyScroller_Ignore_Next_Movement.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
 "
@@ -124,7 +124,7 @@ if !exists("g:SexyScroller_MaxTime")
 endif
 
 if !exists("g:SexyScroller_EasingStyle")
-  let g:SexyScroller_EasingStyle = 1
+  let g:SexyScroller_EasingStyle = 2
 endif
 
 if !exists("g:SexyScroller_DetectPendingKeys")
@@ -133,6 +133,10 @@ endif
 
 if !exists("g:SexyScroller_Debug")
   let g:SexyScroller_Debug = 0
+endif
+
+if !exists("g:SexyScroller_DebugInterruption")
+  let g:SexyScroller_DebugInterruption = 0
 endif
 
 
@@ -221,12 +225,12 @@ function! s:smooth_scroll(start, end)
   " If we have *just* interrupted a previous animation, then continue from where we left off.
   if exists("w:interruptedAnimationAt")
     let timeSinceInterruption = s:get_ms_since(w:interruptedAnimationAt)
-    if g:SexyScroller_Debug
+    if g:SexyScroller_DebugInterruption
       echo "Checking interrupted animation, timeSince=".float2nr(timeSinceInterruption)." remaining=".float2nr(w:interruptedAnimationTimeRemaining)
     endif
     if timeSinceInterruption < 50
       let start = w:interruptedAnimationFrom
-      if g:SexyScroller_Debug
+      if g:SexyScroller_DebugInterruption
         echo "Continuing interrupted animation with ".float2nr(w:interruptedAnimationTimeRemaining)." remaining, from ".start["topline"]
       endif
       " Secondary keystrokes should not make the animation finish sooner than it would have!
@@ -237,6 +241,15 @@ function! s:smooth_scroll(start, end)
       "let totalTime = 1.0 * min([g:SexyScroller_MaxTime,float2nr(totalTime + w:interruptedAnimationTimeRemaining)])
     endif
     unlet w:interruptedAnimationAt
+  endif
+
+  " Since this function can be called if w:interruptedAnimationAt is set, it may sometimes be called unneccessarily, when we are already right next to the destination!  (Without checking, this would cause motion to slow down if I am holding a direction with a very fast keyboard repeat set.  It needs a long wrapped line or some folded lines in order to trigger it, after which interruptedAnimationAt keeps firing.)
+  if numLinesToTravel<2 && numLinesToScroll<2 && numColumnsToTravel<2 && numColumnsToScroll<2
+    return
+  endif
+
+  if g:SexyScroller_Debug
+    echo "Travelling ".numLinesToTravel."/".numLinesToScroll." over ".float2nr(totalTime)."ms"
   endif
 
   while 1
@@ -286,7 +299,7 @@ function! s:smooth_scroll(start, end)
       let w:interruptedAnimationAt = reltime()
       let w:interruptedAnimationFrom = current
       let w:interruptedAnimationTimeRemaining = totalTime * (1.0 - thruTime)
-      if g:SexyScroller_Debug
+      if g:SexyScroller_DebugInterruption
         echo "Pending keys detected at ".reltimestr(reltime())." remaining=".float2nr(w:interruptedAnimationTimeRemaining)
       endif
       " We must now jump to a:end, to be in the right place to process the next keypress, regardless whether it is a movement or edit command.
