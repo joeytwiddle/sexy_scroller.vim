@@ -269,12 +269,12 @@ function! s:smooth_scroll(start, end)
       let thru = cos( 0.5 * pi * (-1.0 + thruTime) )         " fast->slow
     elseif g:SexyScroller_EasingStyle == 2
       let c    = cos( 0.5 * pi * (-1.0 + thruTime) )
-      let thru = sqrt(c)                                     " very fast -> very slow
+      let thru = sqrt(sqrt(c))                               " very fast -> very slow
     elseif g:SexyScroller_EasingStyle == 3
       let thru = 0.5 + 0.5 * cos( pi * (-1.0 + thruTime) )   " slow -> fast -> slow
     elseif g:SexyScroller_EasingStyle == 4
       let cpre = cos( pi * (-1.0 + thruTime) )
-      let thru = 0.5 + 0.5 * sqrt(abs(cpre)) * ( cpre > 0 ? +1 : -1 )    " very slow -> very fast -> very slow
+      let thru = 0.5 + 0.5 * sqrt(sqrt(abs(cpre))) * ( cpre > 0 ? +1 : -1 )    " very slow -> very fast -> very slow
     else
       let thru = thruTime
     endif
