@@ -86,7 +86,7 @@
 "
 " - Our ability to scroll smoothly is limited by the presence of long wrapped lines at the top of the window. (For example if line 340 is long, wrapping to 6 screen lines, then since we cannot set 'topline' to "partway through line 340", the displayed text is forced to jump 6 lines when we set 'topline' to 341.)
 "
-" - Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, even if those 1000 lines have been folded down and appear visually as one line!  TODO: To fix this we could check winline() throughout instead of winrestview()["lnum"].
+" - Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, or move the cursor over them, even if those 1000 lines have been folded down and appear visually as one line!  TODO: To fix this we could check winline() throughout instead of winrestview()["lnum"].  NO that is a very poor check, because it is possible to jump 100 non-folded lines without the winline() changing.  Any suggestions how to fix this are welcome!
 "
 " CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SexyScroller_Ignore_Next_Movement.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
 "
