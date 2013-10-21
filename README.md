@@ -88,6 +88,10 @@ This will make Vim feel more like normal (more responsive).
 
 - Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, even if those 1000 lines have been folded down and appear visually as one line!
 
+  TODO: This is quite ugly, so let's fix it.  We can use `foldclosed()` and `foldclosedend()` to quickly jump over folded lines (during motion and when calculating the motion), but how can we efficiently jump over unfolded blocks?
+
+  Alternatively, we could unset `foldenable` so that the travel happens without folds, and then restore it to its previous state.  I wonder if this might create abnormal behaviour if the motion to within a fold would have caused it to open.
+
 CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SexyScroller_Ignore_Next_Movement.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
 
 CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reproducing the functionality of highlight_line_after_jump.vim)
