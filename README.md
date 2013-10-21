@@ -92,9 +92,9 @@ This will make Vim feel more like normal (more responsive).
 
   Alternatively, we could unset `foldenable` so that the travel happens without folds, and then restore it to its previous state.  I wonder if this might create abnormal behaviour if the motion to within a fold would have caused it to open.
 
-CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SexyScroller_Ignore_Next_Movement.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
+CONSIDER TODO: Make a list of exclude keys, and map them so that they set `w:SexyScroller_Ignore_Next_Movement`.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
 
-CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reproducing the functionality of highlight_line_after_jump.vim)
+CONSIDER TODO: We could optionally enable `cursorline` whilst scrolling.  (Reproducing the functionality of `highlight_line_after_jump.vim`)
 
-TODO: We should politely store and restore lazyredraw if we are going to continue to clobber it.
+TODO: We should politely store and restore `lazyredraw` if we are going to continue to clobber it.
 
