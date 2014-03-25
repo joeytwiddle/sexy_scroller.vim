@@ -109,7 +109,7 @@ if !exists("g:SexyScroller_Enabled")
   let g:SexyScroller_Enabled = 1
 endif
 
-" We can only really see the cursor moving if 'cursorline' is enabled
+" We can only really see the cursor moving if 'cursorline' is enabled (or my hiline plugin is running)
 if !exists("g:SexyScroller_CursorTime")
   let g:SexyScroller_CursorTime = ( &cursorline || exists("g:hiline") && g:hiline ? 5 : 0 )
 endif
@@ -176,7 +176,7 @@ function! s:CheckForChange(actIfChange)
     if s:differ("topline",3) || s:differ("leftcol",3) || s:differ("lnum",2) || s:differ("col",2)
         \ || exists("w:interruptedAnimationAt")
       if s:smooth_scroll(w:oldPosition, w:newPosition)
-        return
+        return   " Do not save the new position if the scroll was interrupted
       endif
     endif
   endif
@@ -188,6 +188,7 @@ function! s:differ(str,amount)
   return abs( w:newPosition[a:str] - w:oldPosition[a:str] ) > a:amount
 endfunction
 
+" This used to return 1 if the scroll was interrupted by a keypress, but now that is indicated by setting w:interruptedAnimationAt
 function! s:smooth_scroll(start, end)
 
   let pi = acos(-1)
@@ -199,7 +200,7 @@ function! s:smooth_scroll(start, end)
 
   let numLinesToTravel = abs( a:end["lnum"] - a:start["lnum"] )
   let numLinesToScroll = abs( a:end["topline"] - a:start["topline"] )
-  let numColumnsToTravel = 0   " abs( a:end["col"] - a:start["col"] )   " No point animating cursor movement because I can't see the cursor during animation!
+  let numColumnsToTravel = 0   " abs( a:end["col"] - a:start["col"] )   " No point animating horizontal cursor movement because I can't see the cursor during animation!
   let numColumnsToScroll = abs( a:end["leftcol"] - a:start["leftcol"] )
   let timeForCursorMove = g:SexyScroller_CursorTime * s:hypot(numLinesToTravel, numColumnsToTravel)
   let timeForScroll = g:SexyScroller_ScrollTime * s:hypot(numLinesToScroll, numColumnsToScroll)
@@ -243,7 +244,7 @@ function! s:smooth_scroll(start, end)
     unlet w:interruptedAnimationAt
   endif
 
-  " Since this function can be called if w:interruptedAnimationAt is set, it may sometimes be called unneccessarily, when we are already right next to the destination!  (Without checking, this would cause motion to slow down if I am holding a direction with a very fast keyboard repeat set.  It needs a long wrapped line or some folded lines in order to trigger it, after which interruptedAnimationAt keeps firing.)
+  " Although we did this check earlier, this function can be called if w:interruptedAnimationAt is set, and it may sometimes be called unneccessarily, when we are already right next to the destination!  (Without checking, this would cause motion to slow down when I am holding a direction with a very fast keyboard repeat set.  To reproduce, hold keys near a long wrapped line or some folded lines, after which interruptedAnimationAt keeps firing.)
   if numLinesToTravel<2 && numLinesToScroll<2 && numColumnsToTravel<2 && numColumnsToScroll<2
     return
   endif
@@ -293,7 +294,7 @@ function! s:smooth_scroll(start, end)
 
     " Break out of the current animation if the user presses a new key.
     " Set some vars so that we can resume this animation from where it was interrupted, if the pending keys trigger further motion.
-    " If they don't the animation simply jumps to the destination.
+    " If they don't trigger another motion, the animation will simply jump to the destination.
     if g:SexyScroller_DetectPendingKeys && getchar(1)
       let w:oldPosition = a:end
       let w:interruptedAnimationAt = reltime()
