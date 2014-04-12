@@ -164,9 +164,15 @@ if maparg("<C-Y>", 'n') == ''
 endif
 
 " Map some of the z commands similarly.
-nnoremap zt zt:call <SID>CheckForChange(1)<CR>
-nnoremap zz zz:call <SID>CheckForChange(1)<CR>
-nnoremap zb zb:call <SID>CheckForChange(1)<CR>
+if maparg("zt", 'n') == ''
+  nnoremap zt zt:call <SID>CheckForChange(1)<CR>
+endif
+if maparg("zz", 'n') == ''
+  nnoremap zz zz:call <SID>CheckForChange(1)<CR>
+endif
+if maparg("zb", 'n') == ''
+  nnoremap zb zb:call <SID>CheckForChange(1)<CR>
+endif
 
 
 " == Functions == "
