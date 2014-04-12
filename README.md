@@ -31,7 +31,7 @@ Set the maximum amount of time that longer scrolls can take:
 
     :let g:SexyScroller_MaxTime = 500
 
-Choose the easing style (how scrolling accelerates and decelerates):
+Choose the easing style (how scrolling accelerates and deccelerates):
 
     :let g:SexyScroller_EasingStyle = 2
 
@@ -45,7 +45,7 @@ where
 
 Interrupts the animation if you press a key.  Resumes the animation if they
 key you pressed causes further scrolling, otherwise just jumps directly to
-the destination.  Resuming animation looks best with EasingStyle 1.
+the destination.  Resuming animation looks best with EasingStyle 1 or 2.
 
     :let g:SexyScroller_DetectPendingKeys = 1   /   0
 
@@ -86,15 +86,14 @@ This will make Vim feel more like normal (more responsive).
 
 - Our ability to scroll smoothly is limited by the presence of long wrapped lines at the top of the window. (For example if line 340 is long, wrapping to 6 screen lines, then since we cannot set 'topline' to "partway through line 340", the displayed text is forced to jump 6 lines when we set 'topline' to 341.)
 
-- Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, even if those 1000 lines have been folded down and appear visually as one line!
+- Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, or move the cursor over them, even if those 1000 lines have been folded down and appear visually as one line!  TODO: To fix this we could check winline() throughout instead of winrestview()["lnum"].  NO that is a very poor check, because it is possible to jump 100 non-folded lines without the winline() changing.  Any suggestions how to fix this are welcome!
 
   TODO: This is quite ugly, so let's fix it.  We can use `foldclosed()` and `foldclosedend()` to quickly jump over folded lines (during motion and when calculating the motion), but how can we efficiently jump over unfolded blocks?
 
   Alternatively, we could unset `foldenable` so that the travel happens without folds, and then restore it to its previous state.  I wonder if this might create abnormal behaviour if the motion to within a fold would have caused it to open.
 
-CONSIDER TODO: Make a list of exclude keys, and map them so that they set `w:SexyScroller_Ignore_Next_Movement`.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
+CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:SexyScroller_Ignore_Next_Movement.  For example this could apply to `/` and `?` with 'hlsearch' enabled, and maybe also to `d`.
 
-CONSIDER TODO: We could optionally enable `cursorline` whilst scrolling.  (Reproducing the functionality of `highlight_line_after_jump.vim`)
+CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reproducing the functionality of highlight_line_after_jump.vim)
 
-TODO: We should politely store and restore `lazyredraw` if we are going to continue to clobber it.
-
+TODO: We should politely store and restore lazyredraw if we are going to continue to clobber it.
