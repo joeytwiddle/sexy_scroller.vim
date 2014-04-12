@@ -1,7 +1,14 @@
-sexy_scroller.vim - Smooth animation of the cursor and the page whenever they move, with easing.
-By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim, one of many Ctrl-U/Ctrl-D scrollers.
+*sexy_scroller.txt*	Smooth animation of the cursor and the page whenever they move, with easing.
+
+By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim, one of many
+Ctrl-U/Ctrl-D scrollers.
+
 Not to be confused with daylilyfield/sexyscroll.vim which lacks easing.
-I have not yet seen any other smooth-scrolling scripts that provide easing, operate on general movements, or use winrestview instead of keymappings/cursorhold.
+
+I have not yet seen any other smooth-scrolling scripts that provide easing,
+operate on general movements, or use winrestview instead of
+keymappings/cursorhold.
+
 
 # Intro
 
@@ -12,6 +19,7 @@ But with SexyScroller, Vim will scroll to the new position smoothly.  As well
 as looking pretty, this provides you with visual feedback about the distance
 and direction in which you have travelled.
 
+
 # Features
 
 - Stable.  Never leaves you halfway through an animation.  Does not gobble your
@@ -20,6 +28,7 @@ and direction in which you have travelled.
 - Does not force you to wait.  If you type additional keys while an animation
   is in progress, the script will immediately jump to the end of the animation
   and Vim will process your keystrokes normally.
+
 
 # Options
 
@@ -73,6 +82,7 @@ a document.
 Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 0.
 This will make Vim feel more like normal (more responsive).
 
+
 # Issues
 
 - The script has trouble detecting a scroll event if the cursor did not move.  This is because we listen for CursorMoved events; Vim does not provide any WindowScrolled event!
@@ -111,4 +121,5 @@ CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reprodu
 
 TODO: We should politely store and restore lazyredraw if we are going to continue to clobber it.
 
-vim: wrap textwidth=0 wrapmargin=0
+
+vim: wrap textwidth=0 wrapmargin=0 filetype=help
