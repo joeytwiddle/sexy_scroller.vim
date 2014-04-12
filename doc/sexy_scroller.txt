@@ -3,10 +3,23 @@ By joeytwiddle, inspired by Terry Ma's smooth_scroll.vim, one of many Ctrl-U/Ctr
 Not to be confused with daylilyfield/sexyscroll.vim which lacks easing.
 I have not yet seen any other smooth-scrolling scripts that provide easing, operate on general movements, or use winrestview instead of keymappings/cursorhold.
 
+# Intro
+
 Usually when you scroll the buffer or motion to a different part of the
-document, Vim will jump there immediately.  But with SexyScroller, Vim will
-scroll to the new position smoothly.  As well as looking pretty, this
-provides you with visual feedback about the distance you have travelled.
+document, Vim will jump there immediately.
+
+But with SexyScroller, Vim will scroll to the new position smoothly.  As well
+as looking pretty, this provides you with visual feedback about the distance
+and direction in which you have travelled.
+
+# Features
+
+- Stable.  Never leaves you halfway through an animation.  Does not gobble your
+  keystrokes.
+
+- Does not force you to wait.  If you type additional keys while an animation
+  is in progress, the script will immediately jump to the end of the animation
+  and Vim will process your keystrokes normally.
 
 # Options
 
@@ -97,3 +110,5 @@ CONSIDER TODO: Make a list of exclude keys, and map them so that they set w:Sexy
 CONSIDER TODO: We could optionally enable cursorline whilst scrolling.  (Reproducing the functionality of highlight_line_after_jump.vim)
 
 TODO: We should politely store and restore lazyredraw if we are going to continue to clobber it.
+
+vim: wrap textwidth=0 wrapmargin=0
