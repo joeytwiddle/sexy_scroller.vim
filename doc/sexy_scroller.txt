@@ -111,7 +111,7 @@ This will make Vim feel more like normal (more responsive).
 
 - Folded lines affect the effort/time-taken calculations.  So it takes MaxTime to scroll 1000 lines out of view, or move the cursor over them, even if those 1000 lines have been folded down and appear visually as one line!  TODO: To fix this we could check winline() throughout instead of winrestview()["lnum"].  NO that is a very poor check, because it is possible to jump 100 non-folded lines without the winline() changing.  Any suggestions how to fix this are welcome!
 
-  TODO: This is quite ugly, so let's fix it.  We can use `foldclosed()` and `foldclosedend()` to quickly jump over folded lines (during motion and when calculating the motion), but how can we efficiently jump over unfolded blocks?
+  TODO: This is quite ugly, so let's fix it.  We can use `foldclosed()` and `foldclosedend()` to detect folded lines, then we could quickly jump over them (during motion and when calculating the motion).
 
   Alternatively, we could unset `foldenable` so that the travel happens without folds, and then restore it to its previous state.  I wonder if this might create abnormal behaviour if the motion to within a fold would have caused it to open.
 
