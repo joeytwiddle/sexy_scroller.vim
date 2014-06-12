@@ -15,7 +15,7 @@ endif
 
 " We can only really see the cursor moving if 'cursorline' is enabled (or my hiline plugin is running)
 if !exists("g:SexyScroller_CursorTime")
-  let g:SexyScroller_CursorTime = ( &cursorline || exists("g:hiline") && g:hiline ? 5 : 0 )
+  let g:SexyScroller_CursorTime = ( &cursorline || exists("g:hiline") && g:hiline ? 8 : 0 )
 endif
 
 " By default, scrolling the buffer is slower then moving the cursor, because a page of text is "heavier" than the cursor.  :)
