@@ -82,6 +82,15 @@ endif
 
 " == Functions == "
 
+" Globally exposed function, so other scripts may call us.
+" Checks if the position of the cursor has changed.
+" If 0 is passed, it will do nothing, but will register the new position.
+" If 1 is passed and the position has changed, it will scroll smoothly to the new position.
+function! g:SexyScroller_ScrollToCursor(...)
+  let actIfChange = a:0 >= 1 ? a:1 : 1
+  call s:CheckForChange(actIfChange)
+endfunction
+
 function! s:CheckForChange(actIfChange)
   let w:newPosition = winsaveview()
   let w:newBuffer = bufname('%')
