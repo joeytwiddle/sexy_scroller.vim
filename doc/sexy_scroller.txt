@@ -30,6 +30,8 @@ and direction in which you have travelled.
   and Vim will process your keystrokes normally.
 
 
+Video: http://www.youtube.com/watch?v=7GqJapCcVyE (thanks Yu-Jie Lin)
+
 # Options
 
 Instead of specifying the scrolling *speed*, SexyScroller asks you to
