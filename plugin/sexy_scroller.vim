@@ -43,6 +43,9 @@ if !exists("g:SexyScroller_DebugInterruption")
   let g:SexyScroller_DebugInterruption = 0
 endif
 
+if !exists("g:SexyScroller_Disabled_FileTypes")
+  let g:SexyScroller_Disabled_FileTypes = ['unite']
+endif
 
 
 " == Setup == "
@@ -95,6 +98,7 @@ function! s:CheckForChange(actIfChange)
   let w:newPosition = winsaveview()
   let w:newBuffer = bufname('%')
   if a:actIfChange && g:SexyScroller_Enabled
+        \ && index(g:SexyScroller_Disabled_FileTypes, &ft) == -1
         \ && exists("w:oldPosition")
         \ && exists("w:oldBuffer") && w:newBuffer==w:oldBuffer "&& mode()=='n'
     if s:differ("topline",3) || s:differ("leftcol",3) || s:differ("lnum",2) || s:differ("col",2)
