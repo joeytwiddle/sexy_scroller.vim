@@ -35,6 +35,14 @@ if !exists("g:SexyScroller_DetectPendingKeys")
   let g:SexyScroller_DetectPendingKeys = 1
 endif
 
+if !exists("g:SexyScroller_MinLines")
+  let g:SexyScroller_MinLines = 3
+endif
+
+if !exists("g:SexyScroller_MinColumns")
+  let g:SexyScroller_MinColumns = 3
+endif
+
 if !exists("g:SexyScroller_Debug")
   let g:SexyScroller_Debug = 0
 endif
@@ -97,7 +105,7 @@ function! s:CheckForChange(actIfChange)
   if a:actIfChange && g:SexyScroller_Enabled
         \ && exists("w:oldPosition")
         \ && exists("w:oldBuffer") && w:newBuffer==w:oldBuffer "&& mode()=='n'
-    if s:differ("topline",3) || s:differ("leftcol",3) || s:differ("lnum",2) || s:differ("col",2)
+    if s:differ("topline",g:SexyScroller_MinLines+1) || s:differ("leftcol",g:SexyScroller_MinColumns+1) || s:differ("lnum",g:SexyScroller_MinLines) || s:differ("col",g:SexyScroller_MinColumns)
         \ || exists("w:interruptedAnimationAt")
       if s:smooth_scroll(w:oldPosition, w:newPosition)
         return   " Do not save the new position if the scroll was interrupted
@@ -168,8 +176,8 @@ function! s:smooth_scroll(start, end)
     unlet w:interruptedAnimationAt
   endif
 
-  " Although we did this check earlier, this function can be called if w:interruptedAnimationAt is set, and it may sometimes be called unneccessarily, when we are already right next to the destination!  (Without checking, this would cause motion to slow down when I am holding a direction with a very fast keyboard repeat set.  To reproduce, hold keys near a long wrapped line or some folded lines, after which interruptedAnimationAt keeps firing.)
-  if numLinesToTravel<2 && numLinesToScroll<2 && numColumnsToTravel<2 && numColumnsToScroll<2
+  " Although we did this check earlier in CheckForChange, this function can also be called if w:interruptedAnimationAt is set, and it may sometimes be called unneccessarily, when we are already right next to the destination!  (Without checking, this would cause motion to slow down when I am holding a direction with a very fast keyboard repeat set.  To reproduce, hold keys near a long wrapped line or some folded lines, and you will see interruptedAnimationAt keeps firing.)
+  if numLinesToTravel<g:SexyScroller_MinLines && numLinesToScroll<g:SexyScroller_MinLines && numColumnsToTravel<g:SexyScroller_MinColumns && numColumnsToScroll<g:SexyScroller_MinColumns
     return
   endif
 

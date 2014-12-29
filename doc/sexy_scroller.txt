@@ -84,6 +84,15 @@ a document.
 Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 0.
 This will make Vim feel more like normal (more responsive).
 
+If you are frustrated by SexyScroller slowing down mouse scrolling, you may be
+able to reduce the issue by configuring the minimum thresholds:
+
+    :let g:SexyScroller_MinLines = 5
+    :let g:SexyScroller_MinColumns = 200
+
+If the cursor or the window move less than these distances, SexyScroller will
+not engage.
+
 
 # Issues
 
@@ -107,7 +116,7 @@ This will make Vim feel more like normal (more responsive).
 
 - With 'cursorline' enabled, the cursor will animate after a mouse click, which does not look natural.  In this case, it should simply jump without any animation.  I cannot think of any way to fix this.
 
-- Animation does not work well with mouse scrolling.  I can't think of any way to work around this.  If you scroll with the mouse more than the keys, this plugin might start ao annoy you.  But it might be the thing that trains you to improve your Vimming.  :)
+- Animation does not work well with mouse scrolling.  I can't think of any way to work around this.  If you scroll with the mouse more than the keys, this plugin might start to annoy you.  But it also might be the thing that trains you to improve your Vimming.  :)
 
 - Our ability to scroll smoothly is limited by the presence of long wrapped lines at the top of the window. (For example if line 340 is long, wrapping to 6 screen lines, then since we cannot set 'topline' to "partway through line 340", the displayed text is forced to jump 6 lines when we set 'topline' to 341.)
 
