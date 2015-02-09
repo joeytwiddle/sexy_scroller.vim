@@ -77,13 +77,13 @@ endif
 
 " Map some of the z commands similarly.
 if maparg("zt", 'n') == ''
-  nnoremap zt zt:call <SID>CheckForChange(1)<CR>
+  nnoremap zt zt:call <SID>CheckForChange(0)<CR>
 endif
 if maparg("zz", 'n') == ''
-  nnoremap zz zz:call <SID>CheckForChange(1)<CR>
+  nnoremap zz zz:call <SID>CheckForChange(0)<CR>
 endif
 if maparg("zb", 'n') == ''
-  nnoremap zb zb:call <SID>CheckForChange(1)<CR>
+  nnoremap zb zb:call <SID>CheckForChange(0)<CR>
 endif
 
 
