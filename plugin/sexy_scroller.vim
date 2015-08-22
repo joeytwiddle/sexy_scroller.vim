@@ -13,6 +13,10 @@ if !exists("g:SexyScroller_Enabled")
   let g:SexyScroller_Enabled = 1
 endif
 
+if !exists("g:SexyScroller_AutocmdsEnabled")
+  let g:SexyScroller_AutocmdsEnabled = 1
+endif
+
 " We can only really see the cursor moving if 'cursorline' is enabled (or my hiline plugin is running)
 if !exists("g:SexyScroller_CursorTime")
   let g:SexyScroller_CursorTime = ( &cursorline || exists("g:hiline") && g:hiline ? 8 : 0 )
@@ -60,14 +64,60 @@ endif
 
 command! SexyScrollerToggle call s:ToggleEnabled()
 
+" OLD approach
+" function! s:Toggle_Smooth_Scroller_Autocmd()
+"     if g:SexyScroller_AutocmdsEnabled == 1
+"         if !exists('#Smooth_Scroller')
+"             augroup Smooth_Scroller
+"               autocmd!
+"               autocmd CursorMoved * call s:CheckForChange(1)
+"               autocmd CursorMovedI * call s:CheckForChange(1)
+"               autocmd InsertLeave * call s:CheckForChange(0)
+"               " Unfortunately we would like to fire on other occasions too, e.g.
+"               " BufferScrolled, but Vim does not offer enough events for us to hook to!
+"             augroup END
+"
+"             " doautoall Smooth_Scroller
+"             " echo 'Smooth_Scroller autocmd enabled'
+"         endif
+"     else
+"         if exists('#Smooth_Scroller')
+"             silent! autocmd! Smooth_Scroller
+"             echo 'Smooth Scroller autocmd disabled'
+"         endif
+"     endif
+" endfunction
+"
+" augroup Init_Autocmd
+"   autocmd!
+"   autocmd VimEnter * call s:Toggle_Smooth_Scroller_Autocmd()
+"   autocmd SourceCmd $MYVIMRC source $MYVIMRC |
+"               \ call s:Toggle_Smooth_Scroller_Autocmd() |
+"               \ AirlineRefresh  " this is needed to fix Airline colors
+" augroup END
+
 augroup Smooth_Scroller
   autocmd!
-  autocmd CursorMoved * call s:CheckForChange(1)
-  autocmd CursorMovedI * call s:CheckForChange(1)
-  autocmd InsertLeave * call s:CheckForChange(0)
+  " Wrap all commands (need to pass as strings) with the cmd wrapper so that they can be
+  " deactivated with the g:SexyScroller_AutcmdsEnabled flag
+  autocmd CursorMoved * call s:AutocmdCmdWrapper("call s:CheckForChange(1)",
+                                                  \g:SexyScroller_AutocmdsEnabled)
+  autocmd CursorMovedI * call s:AutocmdCmdWrapper("call s:CheckForChange(1)",
+                                                  \g:SexyScroller_AutocmdsEnabled)
+  autocmd InsertLeave * call s:AutocmdCmdWrapper("call s:CheckForChange(0)",
+                                                 \g:SexyScroller_AutocmdsEnabled)
   " Unfortunately we would like to fire on other occasions too, e.g.
   " BufferScrolled, but Vim does not offer enough events for us to hook to!
 augroup END
+
+
+" Wrapper around the command to run it conditionally based on a boolean argument
+function! s:AutocmdCmdWrapper(cmd, run)
+    if a:run == 1
+        execute a:cmd
+    endif
+endfunction
+
 
 " |CTRL-E| and |CTRL-Y| scroll the window, but do not fire any events for us to detect.
 " If the user has not made a custom mapping for them, we will map them to fix this.
