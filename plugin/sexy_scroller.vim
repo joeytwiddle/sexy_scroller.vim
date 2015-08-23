@@ -66,8 +66,8 @@ command! SexyScrollerToggle call s:ToggleEnabled()
 
 augroup Smooth_Scroller
   autocmd!
-  " Wrap all commands (need to pass as strings) with the cmd wrapper so that they can be
-  " deactivated with the g:SexyScroller_AutcmdsEnabled flag
+  " Wrap all commands (as strings) with the cmd wrapper so they can be
+  " turned on or off with the g:SexyScroller_AutcmdsEnabled option
   autocmd CursorMoved * call s:AutocmdCmdWrapper("call s:CheckForChange(1)",
                                                   \g:SexyScroller_AutocmdsEnabled)
   autocmd CursorMovedI * call s:AutocmdCmdWrapper("call s:CheckForChange(1)",
