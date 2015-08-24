@@ -97,7 +97,8 @@ The following exposed function is available for other scripts to call:
 
     g:SexyScroller_ScrollToCursor(...)
 
-To use the globally exposed function it is useful to disable the cursor movement related autocommands:
+To use the globally exposed function it is useful to disable the cursor
+movement related autocommands:
 
     :let g:SexyScroller_AutocmdsEnabled = 0
 
