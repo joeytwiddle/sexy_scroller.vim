@@ -68,12 +68,9 @@ augroup Smooth_Scroller
   autocmd!
   " Wrap all commands (as strings) with the cmd wrapper so they can be
   " turned on or off with the g:SexyScroller_AutcmdsEnabled option
-  autocmd CursorMoved * call s:AutocmdCmdWrapper("call s:CheckForChange(1)",
-                                                  \g:SexyScroller_AutocmdsEnabled)
-  autocmd CursorMovedI * call s:AutocmdCmdWrapper("call s:CheckForChange(1)",
-                                                  \g:SexyScroller_AutocmdsEnabled)
-  autocmd InsertLeave * call s:AutocmdCmdWrapper("call s:CheckForChange(0)",
-                                                 \g:SexyScroller_AutocmdsEnabled)
+  autocmd CursorMoved * call s:AutocmdCmdWrapper("call s:CheckForChange(1)", g:SexyScroller_AutocmdsEnabled)
+  autocmd CursorMovedI * call s:AutocmdCmdWrapper("call s:CheckForChange(1)", g:SexyScroller_AutocmdsEnabled)
+  autocmd InsertLeave * call s:AutocmdCmdWrapper("call s:CheckForChange(0)", g:SexyScroller_AutocmdsEnabled)
   " Unfortunately we would like to fire on other occasions too, e.g.
   " BufferScrolled, but Vim does not offer enough events for us to hook to!
 augroup END
