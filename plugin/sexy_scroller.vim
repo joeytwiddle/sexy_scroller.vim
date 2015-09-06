@@ -68,9 +68,9 @@ augroup Smooth_Scroller
   autocmd!
   " Wrap all commands (as strings) with the cmd wrapper so they can be
   " turned on or off with the g:SexyScroller_AutcmdsEnabled option
-  autocmd CursorMoved * call s:AutocmdCmdWrapper("call s:CheckForChange(1)", g:SexyScroller_AutocmdsEnabled)
-  autocmd CursorMovedI * call s:AutocmdCmdWrapper("call s:CheckForChange(1)", g:SexyScroller_AutocmdsEnabled)
-  autocmd InsertLeave * call s:AutocmdCmdWrapper("call s:CheckForChange(0)", g:SexyScroller_AutocmdsEnabled)
+  autocmd CursorMoved * call s:AutocmdCmdWrapper("call s:CheckForChange(1)")
+  autocmd CursorMovedI * call s:AutocmdCmdWrapper("call s:CheckForChange(1)")
+  autocmd InsertLeave * call s:AutocmdCmdWrapper("call s:CheckForChange(0)")
   " Unfortunately we would like to fire on other occasions too, e.g.
   " BufferScrolled, but Vim does not offer enough events for us to hook to!
 augroup END
@@ -279,8 +279,8 @@ function! s:ToggleEnabled()
 endfunction
 
 " Conditionally run a command
-function! s:AutocmdCmdWrapper(cmd, run)
-    if a:run == 1
+function! s:AutocmdCmdWrapper(cmd)
+    if g:SexyScroller_AutocmdsEnabled == 1
         execute a:cmd
     endif
 endfunction
