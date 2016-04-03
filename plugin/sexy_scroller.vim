@@ -127,7 +127,7 @@ endfunction
 " This used to return 1 if the scroll was interrupted by a keypress, but now that is indicated by setting w:interruptedAnimationAt
 function! s:smooth_scroll(start, end)
 
-  let pi = acos(-1)
+  let pi = 3.141593
 
   "if g:SexyScroller_Debug
     "echo "Going from ".a:start["topline"]." to ".a:end["topline"]." with lnum from ".a:start["lnum"]." to ".a:end["lnum"]
