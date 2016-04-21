@@ -77,21 +77,24 @@ This command is provided to enable/disable the scrolling:
 
     :SexyScrollerToggle
 
-For eye candy, try MaxTime=1200, EasingStyle=3 and increase ScrollTime as
-well.  This can help to visualise the distance travelled when moving through
-a document.
+Power users with fast machines may prefer to lower MaxTime to 200.  This will
+make Vim feel more snappy and responsive.
 
-Power users may prefer to lower MaxTime to 400, and set EasingStyle 1 or 0.
-This will make Vim feel more like normal (more responsive).
+Users with slower machines may like to increase MaxTime to 400 or 500, and
+maybe even change the EasingStyle to 1.
 
-If you are frustrated by SexyScroller slowing down mouse scrolling, you may be
-able to reduce the issue by configuring the minimum thresholds:
+For eye candy (e.g. for presentations), try MaxTime=1000, EasingStyle=3 and
+increase ScrollTime as well.  This can help to visualise the distance
+travelled when moving slowly and smoothly through the document.
 
-    :let g:SexyScroller_MinLines = 5
+If you are frustrated by SexyScroller slowing down mouse scrolling, you can
+mitigate this issue by increasing the minimum thresholds:
+
+    :let g:SexyScroller_MinLines = 50
     :let g:SexyScroller_MinColumns = 200
 
-If the cursor or the window move less than these distances, SexyScroller will
-not engage.
+The disadvantage is that if the cursor or the window move less than these
+distances, SexyScroller will not engage.
 
 
 # Issues
@@ -100,13 +103,13 @@ not engage.
 
   If the script does fail to detect when a scroll occurs, it will eventually notice it later, when the cursor _does_ move.  This will trigger an animation later than expected from a point which we already left some time ago.  This looks wrong!
 
-  Since this affects `<C-E>` and `<C-Y>`, we remap them to compensate.  However if you have mapped any alternative keybinds or commands which scroll the page without moving the cursor, these will not work.  A workaround is to append `<BS><Space>` to any such mappings, to move the cursor and move it back again!
+  Since this affects `<C-E>` and `<C-Y>`, we remap them to compensate.  However if you have mapped any alternative keybinds or commands which scroll the page without moving the cursor, you will encounter this issue.  A simple workaround is to append `<BS><Space>` to any such mappings, to move the cursor and move it back again!
 
   Other keys similarly affected are the various `z` commands under |scroll-cursor|.  They are hard to map.
 
-- We cannot detect the scrolling through the document that occurs during a `/` search when 'incsearch' is enabled, again from a lack of events.  (This does not affect `n` and `N`, which work fine.)  TODO: We could temporarily disable animations when `/` or `?` are initiated and 'incsearch' is enabled (until the next CursorMoved or a CursorHold).  Alternatively, we could attempt to implement a fake `/` interface.
+- We cannot detect the scrolling through the document that occurs during a `/` search when 'incsearch' is enabled, again due to a lack of events.  (This does not affect `n` and `N`, which work fine.)  TODO: We could temporarily disable animations when `/` or `?` are initiated and 'incsearch' is enabled (until the next CursorMoved or a CursorHold).  Alternatively, we could attempt to implement a fake `/` interface.
 
-- I have disabled smooth horizontal animation of the cursor because I can never see the cursor when it's moving, even with 'cursorcolumn' enabled!  Scrolling in this case is pointless: it just looks like Vim is briefly frozen!  In fact the cursor is also invisible during vertical scrolling, although 'cursorline' is visible while it is moving, if enabled.  CONSIDER TODO: A workaround for both axes might be to perform the requested movement as a sequence of feedkeys(), rather than calls to winrestview.  We would need to avoid re-triggering ourself on those CursorMoved events, with :noauto or with a flag.
+- I have disabled smooth horizontal animation of the cursor because I can never see the cursor when it's moving, even with 'cursorcolumn' enabled!  (Linux with both xterm and GVim.)  Scrolling in this case is pointless: it just looks like Vim is briefly frozen!  In fact the cursor is also invisible during vertical scrolling, although 'cursorline' is visible while it is moving, if enabled.  CONSIDER TODO: A workaround for both axes might be to perform the requested movement as a sequence of feedkeys(), rather than calls to winrestview.  We would need to avoid re-triggering ourself on those CursorMoved events, with :noauto or with a flag.
 
 - PageUp, PageDown, Ctrl-U and Ctrl-D do not consistently trigger a getchar(), so DetectPendingKeys does not always work for them.  This may be system-dependent.  Simpler keystrokes like { and } never fail.  The result is that subsequent keypresses will not interrupt animation, but will start a second animation separately after the animation of the earlier keypresses.
 
