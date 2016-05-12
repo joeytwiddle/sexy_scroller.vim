@@ -13,6 +13,10 @@ if !exists("g:SexyScroller_Enabled")
   let g:SexyScroller_Enabled = 1
 endif
 
+if !exists("g:SexyScroller_AutocmdsEnabled")
+  let g:SexyScroller_AutocmdsEnabled = 1
+endif
+
 " We can only really see the cursor moving if 'cursorline' is enabled (or my hiline plugin is running)
 if !exists("g:SexyScroller_CursorTime")
   let g:SexyScroller_CursorTime = ( &cursorline || exists("g:hiline") && g:hiline ? 8 : 0 )
@@ -62,9 +66,11 @@ command! SexyScrollerToggle call s:ToggleEnabled()
 
 augroup Smooth_Scroller
   autocmd!
-  autocmd CursorMoved * call s:CheckForChange(1)
-  autocmd CursorMovedI * call s:CheckForChange(1)
-  autocmd InsertLeave * call s:CheckForChange(0)
+  " Wrap all commands (as strings) with the cmd wrapper so they can be
+  " turned on or off with the g:SexyScroller_AutcmdsEnabled option
+  autocmd CursorMoved * call s:AutocmdCmdWrapper("call s:CheckForChange(1)")
+  autocmd CursorMovedI * call s:AutocmdCmdWrapper("call s:CheckForChange(1)")
+  autocmd InsertLeave * call s:AutocmdCmdWrapper("call s:CheckForChange(0)")
   " Unfortunately we would like to fire on other occasions too, e.g.
   " BufferScrolled, but Vim does not offer enough events for us to hook to!
 augroup END
@@ -270,6 +276,13 @@ endfunction
 function! s:ToggleEnabled()
   let g:SexyScroller_Enabled = !g:SexyScroller_Enabled
   echo "Sexy Scroller is " . ( g:SexyScroller_Enabled ? "en" : "dis" ) . "abled"
+endfunction
+
+" Conditionally run a command
+function! s:AutocmdCmdWrapper(cmd)
+    if g:SexyScroller_AutocmdsEnabled == 1
+        execute a:cmd
+    endif
 endfunction
 
 

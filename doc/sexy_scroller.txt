@@ -96,6 +96,12 @@ mitigate this issue by increasing the minimum thresholds:
 The disadvantage is that if the cursor or the window move less than these
 distances, SexyScroller will not engage.
 
+The function g:SexyScroller_ScrollToCursor(...) is available as a globally
+exposed function. If you want to use this, it is useful to disable the
+cursor movement related autocommands:
+
+    :let g:SexyScroller_AutocmdsEnabled = 0
+
 
 # Issues
 
