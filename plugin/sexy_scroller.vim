@@ -249,6 +249,7 @@ function! s:smooth_scroll(start, end)
       " If we do end up resuming this animation, this winrestview will cause flicker, unless we set lazyredraw to prevent it.
       set lazyredraw
       call winrestview(a:end)
+      set lazyredraw&
       return 0
       " Old approach:
       "let w:oldPosition = current
